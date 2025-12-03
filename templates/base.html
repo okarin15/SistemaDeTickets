@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema de Tickets - Empresa Coyahue{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* PEGA AQUÍ TODOS LOS ESTILOS CSS DEL ARCHIVO QUE ME MOSTRASTE */
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-sidebar: #1e293b;
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --secondary: #3b82f6;
+            --accent: #8b5cf6;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --border-color: #334155;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .theme-light {
+            --bg-dark: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-sidebar: #ffffff;
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --secondary: #3b82f6;
+            --accent: #8b5cf6;
+            --text-light: #1e293b;
+            --text-muted: #64748b;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --border-color: #e2e8f0;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        /* ... PEGA EL RESTO COMPLETO DEL CSS ... */
+    </style>
+</head>
+<body>
+    {% block content %}
+    {% endblock %}
+
+    <!-- Scripts comunes -->
+    <script>
+        // PEGA AQUÍ EL JAVASCRIPT COMPLETO DEL ARCHIVO
+    </script>
+    
+    {% block extra_js %}
+    {% endblock %}
+</body>
+</html>

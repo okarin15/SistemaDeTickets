@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Orden de Trabajo T-{{ ticket.id|stringformat:"04d" }}</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            padding: 40px; 
+            color: #333; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: white;
+        }
+        .header { 
+            border-bottom: 2px solid #333; 
+            padding-bottom: 20px; 
+            margin-bottom: 30px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        .logo h1 { margin: 0; color: #10b981; text-transform: uppercase; letter-spacing: 1px; }
+        .logo small { color: #666; font-size: 0.9rem; }
+        .meta-info { text-align: right; }
+        .meta-info h2 { margin: 0; font-size: 1.5rem; }
+        
+        .ticket-box { 
+            border: 1px solid #ddd; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-bottom: 25px; 
+            background-color: #f9fafb;
+        }
+        
+        .row { display: flex; margin-bottom: 15px; }
+        .row:last-child { margin-bottom: 0; }
+        .col { flex: 1; }
+        
+        .label { 
+            font-weight: bold; 
+            color: #64748b; 
+            font-size: 0.8rem; 
+            text-transform: uppercase; 
+            display: block; 
+            margin-bottom: 4px;
+        }
+        .value { font-size: 1.1rem; font-weight: 500; }
+        
+        .status-badge { 
+            padding: 4px 10px; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            background: #e2e8f0;
+            border: 1px solid #cbd5e1; 
+            display: inline-block; 
+            font-size: 0.9rem;
+        }
+        
+        .description-box {
+            margin-bottom: 40px;
+        }
+        .description-box h3 {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .content {
+            line-height: 1.6;
+            white-space: pre-wrap;
+            text-align: justify;
+        }
+
+        .signatures {
+            margin-top: 80px; 
+            display: flex; 
+            justify-content: space-between;
+        }
+        .sign-box {
+            text-align: center; 
+            width: 40%;
+        }
+        .sign-line {
+            border-top: 1px solid #333;
+            margin-bottom: 10px;
+        }
+        
+        .footer { 
+            margin-top: 50px; 
+            border-top: 1px solid #ddd; 
+            padding-top: 20px; 
+            font-size: 0.8rem; 
+            text-align: center; 
+            color: #94a3b8; 
+        }
+        
+        /* Ocultar botón al imprimir */
+        @media print {
+            .no-print { display: none; }
+            body { padding: 0; margin: 0; }
+            .ticket-box { border: 1px solid #000; }
+        }
+        
+        .btn-print {
+            background: #3b82f6; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-print:hover { background: #2563eb; }
+    </style>
+</head>
+<body onload="window.print()">
+    <div class="no-print" style="margin-bottom: 20px; text-align: right;">
+        <button onclick="window.print()" class="btn-print">
+            🖨️ Imprimir Orden
+        </button>
+    </div>
+
+    <div class="header">
+        <div class="logo">
+            <h1>Coyahue S.A.</h1>
+            <small>Sistema de Gestión TI</small>
+        </div>
+        <div class="meta-info">
+            <h2>ORDEN T-{{ ticket.id|stringformat:"04d" }}</h2>
+            <p>Generado: {% now "d/m/Y H:i" %}</p>
+        </div>
+    </div>
+
+    <div class="ticket-box">
+        <div class="row">
+            <div class="col">
+                <span class="label">SOLICITANTE:</span>
+                <span class="value">{{ ticket.solicitante.get_full_name|default:ticket.solicitante.username }}</span>
+            </div>
+            <div class="col">
+                <span class="label">EMAIL:</span>
+                <span class="value">{{ ticket.solicitante.email|default:"-" }}</span>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <span class="label">CATEGORÍA:</span>
+                <span class="value">{{ ticket.categoria.nombre }}</span>
+            </div>
+            <div class="col">
+                <span class="label">FECHA SOLICITUD:</span>
+                <span class="value">{{ ticket.fecha_creacion|date:"d/m/Y H:i" }}</span>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <span class="label">ESTADO ACTUAL:</span>
+                <span class="status-badge">{{ ticket.get_estado_display|upper }}</span>
+            </div>
+            <div class="col">
+                <span class="label">TÉCNICO ASIGNADO:</span>
+                <span class="value">
+                    {% if ticket.asignado_a %}
+                        {{ ticket.asignado_a.get_full_name|default:ticket.asignado_a.username }}
+                    {% else %}
+                        Sin asignar
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="description-box">
+        <h3>Detalle del Requerimiento</h3>
+        <div class="content">
+            {{ ticket.descripcion }}
+        </div>
+    </div>
+
+    <div class="signatures">
+        <div class="sign-box">
+            <div class="sign-line"></div>
+            <p>Firma Técnico</p>
+        </div>
+        <div class="sign-box">
+            <div class="sign-line"></div>
+            <p>Firma Usuario (Conformidad)</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        Documento generado automáticamente por el Sistema de Tickets Coyahue.
+    </div>
+</body>
+</html>

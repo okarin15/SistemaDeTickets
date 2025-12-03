@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Técnico de Soporte</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --secondary: #3b82f6;
+            --accent: #8b5cf6;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --dark: #f8fafc;
+            --dark-light: #e2e8f0;
+            --darker: #cbd5e1;
+            --text-light: #0f172a;
+            --text-muted: #475569;
+            --border-color: #cbd5e1;
+            --sidebar-width: 260px;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(15, 23, 42, 0.15);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            transition: var(--transition);
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--dark-light);
+            padding: 20px 0;
+            border-right: 1px solid var(--border-color);
+            transition: var(--transition);
+            position: fixed;
+            height: 100vh;
+            z-index: 1000;
+        }
+
+        .logo {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+            letter-spacing: -0.5px;
+            
+            background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo small {
+            color: #1f2937; 
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .nav-links {
+            list-style: none;
+        }
+
+        .nav-links li {
+            padding: 12px 20px;
+            border-left: 3px solid transparent;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .nav-links li:hover {
+            background-color: rgba(16, 185, 129, 0.1);
+            border-left: 3px solid var(--primary);
+        }
+
+        .nav-links li.active {
+            background-color: rgba(16, 185, 129, 0.1);
+            border-left: 3px solid var(--primary);
+        }
+
+        .nav-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+        }
+
+        .nav-links i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            margin-left: var(--sidebar-width);
+            transition: var(--transition);
+            min-height: 100vh;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #ffffff;
+            padding: 12px 20px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--box-shadow);
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .user-role {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: #ffffff;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            text-align: center;
+            box-shadow: var(--box-shadow);
+            border-top: 4px solid var(--primary);
+            transition: var(--transition);
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+        
+        .stat-card i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        .stat-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            color: var(--text-light);
+            line-height: 1;
+        }
+        
+        .stat-card p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin: 0;
+        }
+
+        .table-container {
+            background-color: #ffffff;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            margin-bottom: 30px;
+            transition: var(--transition);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #e5e7eb;
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tr:hover {
+            background-color: #f3f4f6;
+        }
+
+        .status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status.pending {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .status.in-progress {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: var(--secondary);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .status.completed {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status.nuevo {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        .status.en_progreso {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: var(--secondary);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        .status.resuelto,
+        .status.completed {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status.closed {
+            background-color: rgba(148, 163, 184, 0.2);
+            color: #64748b; /* Color grisáceo */
+            border: 1px solid rgba(148, 163, 184, 0.3);
+        }
+
+        .priority {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .priority.high,
+        .priority.alta {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .priority.medium,
+        .priority.media {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .priority.low,
+        .priority.baja {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background-color: rgba(16, 185, 129, 0.1);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: var(--transition);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .action-btn.view {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .action-btn.state {
+            background: linear-gradient(135deg, var(--warning) 0%, #f97316 100%);
+            color: white;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(15, 23, 42, 0.2);
+        }
+
+        .filter-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 12px 15px;
+            background-color: #ffffff;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            color: var(--text-light);
+            transition: var(--transition);
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .filter-select {
+            padding: 10px 15px;
+            background-color: #ffffff;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            color: var(--text-light);
+            font-size: 0.9rem;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .checkbox-inline {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .checkbox-inline input {
+            width: 16px;
+            height: 16px;
+        }
+
+        .page-content {
+            display: none;
+        }
+        
+        .page-content.active {
+            display: block;
+        }
+
+        .logout-btn {
+            margin-top: 20px;
+            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+            width: calc(100% - 40px);
+            margin-left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .mobile-menu-btn {
+            display: none;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
+            color: white;
+            font-weight: 600;
+            z-index: 3000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            box-shadow: var(--box-shadow);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, var(--success) 0%, var(--primary) 100%);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+        }
+
+        .notification.info {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #ffffff;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            width: 90%;
+            max-width: 520px;
+            box-shadow: var(--box-shadow);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.4rem;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            color: var(--danger);
+        }
+
+        .modal h2 {
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+
+        .modal p {
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .modal .meta {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 15px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+                margin-bottom: 20px;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+                position: fixed;
+                top: 15px;
+                right: 15px;
+                z-index: 1001;
+                background: var(--primary);
+                color: white;
+                border: none;
+                border-radius: var(--border-radius);
+                padding: 8px 12px;
+                font-size: 1.1rem;
+                cursor: pointer;
+                box-shadow: var(--box-shadow);
+            }
+
+            .table-container {
+                overflow-x: auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dashboard-stats {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
+        }
+
+        /* === ESTILOS DE FORMULARIO (MODALES) === */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        .form-control {
+            width: 100%; /* Esto arregla el tamaño pequeño */
+            padding: 12px 15px;
+            background-color: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #334155;
+            transition: all 0.3s ease;
+            box-sizing: border-box; /* Vital para que no se salga del contenedor */
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+    </style>
+</head>
+<body>
+    <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">
+                <h1>Sistema de Tickets</h1>
+                <small>Panel Técnico</small>
+            </div>
+            <ul class="nav-links">
+                <li class="active"><a href="#" onclick="showPage('dashboard')"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+                <li><a href="#" onclick="showPage('mis-tickets')"><i class="fas fa-clipboard-check"></i> Mis Tickets</a></li>
+                <li><a href="#" onclick="showPage('todos')"><i class="fas fa-ticket-alt"></i> Todos los Tickets</a></li>
+                <li><a href="#" onclick="showPage('faq')"><i class="fas fa-question-circle"></i> FAQs</a></li>
+            </ul>
+
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Cerrar Sesión
+                </button>
+            </form>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <h1 id="pageTitle">Dashboard Técnico</h1>
+                <div class="user-info">
+                    <div class="avatar">T</div>
+                    <div class="user-details">
+                        <div class="user-name">{{ user.username }}</div>
+                        <div class="user-role">Técnico de Soporte</div>
+                    </div>
+                </div>
+            </header>
+
+            <section id="dashboard-page" class="page-content active">
+                <div class="dashboard-stats">
+                    <div class="stat-card" id="cardMyPending">
+                        <i class="fas fa-clock"></i>
+                        <h3 id="myPendingCount">0</h3>
+                        <p>Mis tickets pendientes</p>
+                    </div>
+                    <div class="stat-card" id="cardMyProgress">
+                        <i class="fas fa-spinner"></i>
+                        <h3 id="myProgressCount">0</h3>
+                        <p>En progreso</p>
+                    </div>
+                    <div class="stat-card" id="cardMyPriority">
+                        <i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i> <h3 id="myPriorityCount">0</h3>
+                        <p>Mis Urgencias (Alta/Crítica)</p>
+                    </div>
+
+                    <div class="stat-card" id="cardUnassigned">
+                        <i class="fas fa-hand-holding-medical" style="color: #3b82f6;"></i> <h3 id="unassignedCount">0</h3>
+                        <p>Disponibles para tomar</p>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <div class="table-header" style="padding: 18px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: var(--text-light);">Mis tickets recientes</h3>
+                        <button class="btn btn-primary" onclick="showPage('mis-tickets')" style="padding: 8px 15px; font-size: 0.85rem;">
+                            <i class="fas fa-list"></i> Ver todos
+                        </button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Título</th>
+                                <th>Usuario</th>
+                                <th>Prioridad</th>
+                                <th>Estado</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="myRecentTicketsBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="mis-tickets-page" class="page-content">
+                <div class="filter-container">
+                    <div class="search-bar">
+                        <input type="text" id="myTicketSearch" placeholder="Buscar en mis tickets...">
+                    </div>
+                    <select class="filter-select" id="myTicketStatusFilter">
+                        <option value="">Todos los estados</option>
+                        <option value="pending">Pendiente</option>
+                        <option value="in-progress">En Progreso</option>
+                        <option value="completed">Resuelto</option>
+                    </select>
+                    <select class="filter-select" id="myTicketPriorityFilter">
+                        <option value="">Todas las prioridades</option>
+                        <option value="high">Alta</option>
+                        <option value="medium">Media</option>
+                        <option value="low">Baja</option>
+                    </select>
+                </div>
+
+                <div class="table-container">
+                    <div class="table-header" style="padding: 18px 20px; border-bottom: 1px solid var(--border-color);">
+                        <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: var(--text-light);">Mis Tickets Asignados</h3>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Título</th>
+                                <th>Usuario</th>
+                                <th>Prioridad</th>
+                                <th>Estado</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="myTicketsTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="todos-page" class="page-content">
+                <div class="filter-container">
+                    <div class="search-bar">
+                        <input type="text" id="allTicketSearch" placeholder="Buscar en todos los tickets...">
+                    </div>
+                    <select class="filter-select" id="allTicketStatusFilter">
+                        <option value="">Todos los estados</option>
+                        <option value="pending">Pendiente</option>
+                        <option value="in-progress">En Progreso</option>
+                        <option value="completed">Resuelto</option>
+                    </select>
+                    <select class="filter-select" id="allTicketPriorityFilter">
+                        <option value="">Todas las prioridades</option>
+                        <option value="high">Alta</option>
+                        <option value="medium">Media</option>
+                        <option value="low">Baja</option>
+                    </select>
+                    <label class="checkbox-inline">
+                        <input type="checkbox" id="onlyUnassigned">
+                        Mostrar solo sin asignar
+                    </label>
+                </div>
+
+                <div class="table-container">
+                    <div class="table-header" style="padding: 18px 20px; border-bottom: 1px solid var(--border-color);">
+                        <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: var(--text-light);">Tickets del Sistema</h3>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Título</th>
+                                <th>Usuario</th>
+                                <th>Prioridad</th>
+                                <th>Estado</th>
+                                <th>Fecha</th>
+                                <th>Técnico</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allTicketsTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="faq-page" class="page-content">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center;">
+                    <h3 style="font-size: 1.2rem; font-weight: 700;">Base de Conocimiento (FAQ)</h3>
+                    <button class="btn btn-primary" onclick="openFaqModal()">+ Nueva Pregunta</button>
+                </div>
+                <div class="table-container" style="padding: 20px;">
+                    <div id="faqContainer"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="modal" id="ticketModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeTicketModal()">&times;</button>
+            <h2 id="modalTicketTitle">Detalle del Ticket</h2>
+            <p class="meta" id="modalTicketId"></p>
+            <p class="meta" id="modalTicketUser"></p>
+            <p class="meta" id="modalTicketDate"></p>
+            <p class="meta" id="modalTicketTech"></p>
+            <p><strong>Prioridad:</strong> <span id="modalTicketPriority"></span></p>
+            <p><strong>Estado:</strong> <span id="modalTicketStatus"></span></p>
+            <p><strong>Descripción:</strong></p>
+            <p id="modalTicketDescription"></p>
+
+            <div id="modalTicketFile" style="margin-top: 15px; margin-bottom: 15px;"></div>
+
+            <hr style="margin: 20px 0; border-color: var(--border-color);">
+            <h3 style="font-size: 1.1rem; margin-bottom: 15px;">Historial de Comentarios</h3>
+            
+            <div id="commentsList" style="background: #f8fafc; padding: 15px; border-radius: 8px; max-height: 200px; overflow-y: auto; margin-bottom: 15px;">
+                </div>
+
+            <form id="replyForm" method="POST" action="">
+                {% csrf_token %}
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <textarea class="form-control" name="contenido" rows="2" placeholder="Escribe una respuesta al usuario..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Enviar Respuesta</button>
+            </form>
+
+            <div style="text-align: right; margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
+                <a id="printTicketBtn" href="#" target="_blank" class="btn btn-primary" style="display: none;">
+                    <i class="fas fa-print"></i> Imprimir Orden
+                </a>
+                
+                <button class="btn btn-outline" type="button" onclick="closeTicketModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="faqModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeFaqModal()">×</button>
+            <h2 id="faqModalTitle">Nueva Pregunta</h2>
+            <form action="{% url 'guardar_faq' %}" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="faq_id" id="faqId">
+                <div class="form-group">
+                    <label>Pregunta</label>
+                    <input type="text" class="form-control" name="pregunta" id="faqPregunta" required>
+                </div>
+                <div class="form-group">
+                    <label>Respuesta</label>
+                    <textarea class="form-control" name="respuesta" id="faqRespuesta" rows="4" required></textarea>
+                </div>
+                <div style="text-align: right; margin-top: 20px;">
+                    <button type="button" class="btn btn-outline" onclick="closeFaqModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        const currentTechnicianUsername = "{{ user.username|escapejs }}";
+
+        const masterFaqs = {{ faqs_json|safe }};
+        let masterTickets = [];
+        let myTickets = [];
+        let allTicketsView = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEvents();
+            loadTicketsData();
+            updateAllViews();
+
+            // --- NUEVO: DETECTAR PESTAÑA DESDE URL ---
+            // Esto permite que al guardar una FAQ, vuelvas a la pestaña de FAQs
+            const urlParams = new URLSearchParams(window.location.search);
+            const tab = urlParams.get('tab');
+            
+            if (tab) {
+                showPage(tab); // Abre la pestaña que diga la URL
+                // Limpia la URL para que se vea bonita
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        });
+
+        function setupEvents() {
+            const mobileBtn = document.getElementById('mobileMenuBtn');
+            const sidebar = document.getElementById('sidebar');
+            mobileBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+            });
+
+            document.getElementById('myTicketSearch').addEventListener('input', applyMyTicketFilters);
+            document.getElementById('myTicketStatusFilter').addEventListener('change', applyMyTicketFilters);
+            document.getElementById('myTicketPriorityFilter').addEventListener('change', applyMyTicketFilters);
+
+            document.getElementById('allTicketSearch').addEventListener('input', applyAllTicketFilters);
+            document.getElementById('allTicketStatusFilter').addEventListener('change', applyAllTicketFilters);
+            document.getElementById('allTicketPriorityFilter').addEventListener('change', applyAllTicketFilters);
+            document.getElementById('onlyUnassigned').addEventListener('change', applyAllTicketFilters);
+        }
+
+        function showPage(page) {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+            document.getElementById(page + '-page').classList.add('active');
+
+            document.querySelectorAll('.nav-links li').forEach(li => li.classList.remove('active'));
+            const activeLink = document.querySelector('.nav-links a[onclick="showPage(\'' + page + '\')"]');
+            if (activeLink) activeLink.parentElement.classList.add('active');
+
+            const titles = {
+                'dashboard': 'Dashboard Técnico',
+                'mis-tickets': 'Mis Tickets Asignados',
+                'todos': 'Tickets del Sistema'
+            };
+            document.getElementById('pageTitle').textContent = titles[page] || 'Dashboard Técnico';
+
+            if (page === 'faq') {
+                loadFaqData();
+            }
+        }
+
+        function loadTicketsData() {
+            // LEER DATOS DE DJANGO
+            const ticketsFromDjango = {{ tickets_json|default:"[]"|safe }};
+            
+            if (ticketsFromDjango.length > 0) {
+                masterTickets = ticketsFromDjango;
+            } else {
+                masterTickets = [];
+            }
+
+            // Filtrar: Mis tickets vs Todos
+            // currentTechnicianUsername viene de la variable que pusiste al inicio del script
+            myTickets = masterTickets.filter(t => t.agente === currentTechnicianUsername);
+            allTicketsView = [...masterTickets];
+        }
+
+        function saveTickets() {
+            try {
+                localStorage.setItem('ticketsApp', JSON.stringify(masterTickets));
+            } catch (e) {
+                console.error('Error guardando tickets en localStorage', e);
+            }
+        }
+
+        function updateAllViews() {
+            myTickets = masterTickets.filter(t => (t.agente || "") === currentTechnicianUsername);
+            allTicketsView = [...masterTickets];
+            updateDashboard();
+            renderMyRecentTickets();
+            applyMyTicketFilters();
+            applyAllTicketFilters();
+        }
+
+        function updateDashboard() {
+            // 1. Contadores existentes
+            const myPending = myTickets.filter(t => normalizeStatus(t.estado) === 'pending').length;
+            const myProgress = myTickets.filter(t => normalizeStatus(t.estado) === 'in-progress').length;
+            
+            // 2. NUEVO: Contar mis tickets Alta/Crítica que NO estén cerrados
+            const myHighPriority = myTickets.filter(t => 
+                (normalizePriority(t.prioridad) === 'high' || normalizePriority(t.prioridad) === 'critical') &&
+                (normalizeStatus(t.estado) !== 'completed' && normalizeStatus(t.estado) !== 'closed')
+            ).length;
+
+            // 3. NUEVO: Contar tickets sin agente (La bolsa de trabajo)
+            // Usamos masterTickets porque ahí están los "Sin asignar" que trajimos del backend
+            const unassigned = masterTickets.filter(t => !t.agente).length;
+
+            // Actualizar textos en pantalla
+            document.getElementById('myPendingCount').textContent = myPending;
+            document.getElementById('myProgressCount').textContent = myProgress;
+            
+            // Actualizar los nuevos IDs
+            document.getElementById('myPriorityCount').textContent = myHighPriority;
+            document.getElementById('unassignedCount').textContent = unassigned;
+
+            // --- CONFIGURAR CLICS ---
+            
+            // Clic en Pendientes (Igual que antes)
+            document.getElementById('cardMyPending').onclick = () => {
+                showPage('mis-tickets');
+                document.getElementById('myTicketStatusFilter').value = 'pending';
+                document.getElementById('myTicketPriorityFilter').value = ''; // Limpiar otros filtros
+                applyMyTicketFilters();
+            };
+            
+            // Clic en En Progreso (Igual que antes)
+            document.getElementById('cardMyProgress').onclick = () => {
+                showPage('mis-tickets');
+                document.getElementById('myTicketStatusFilter').value = 'in-progress';
+                document.getElementById('myTicketPriorityFilter').value = '';
+                applyMyTicketFilters();
+            };
+            
+            // NUEVO: Clic en Urgencias -> Filtra por Prioridad Alta
+            document.getElementById('cardMyPriority').onclick = () => {
+                showPage('mis-tickets');
+                document.getElementById('myTicketPriorityFilter').value = 'high'; // Filtra alta
+                document.getElementById('myTicketStatusFilter').value = '';   // Cualquier estado
+                applyMyTicketFilters();
+            };
+            
+            // NUEVO: Clic en Disponibles -> Lleva a "Todos" y marca "Solo sin asignar"
+            document.getElementById('cardUnassigned').onclick = () => {
+                showPage('todos');
+                // Activar el checkbox de "Mostrar solo sin asignar"
+                const check = document.getElementById('onlyUnassigned');
+                if(check) check.checked = true;
+                
+                applyAllTicketFilters();
+            };
+        }
+
+        function renderMyRecentTickets() {
+            const tbody = document.getElementById('myRecentTicketsBody');
+            tbody.innerHTML = '';
+ 
+            // Tomamos los 3 más recientes
+            const recent = myTickets.slice(0, 3);
+            
+            recent.forEach(ticket => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>T-${String(ticket.id || '').padStart(6, '0')}</strong></td>
+                    <td>${ticket.titulo || ''}</td>
+                    <td>${ticket.usuario || ''}</td>
+                    <td>
+                        <span class="priority ${ticket.prioridad || ''}" 
+                              onclick="cycleTicketPriority(${ticket.id})" 
+                              style="cursor: pointer; user-select: none;" 
+                              title="Clic para cambiar prioridad">${getPriorityText(ticket.prioridad)}</span>
+                    </td>
+                    <td><span class="status ${ticket.estado || ''}">${getStatusText(ticket.estado)}</span></td>
+                    <td>${formatDate(ticket.fecha)}</td>
+                    <td class="action-buttons">
+                        <button class="action-btn view" type="button" onclick="viewTicket(${ticket.id})" title="Ver detalles y responder">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        
+                        <button class="action-btn state" type="button" onclick="cycleTicketStatus(${ticket.id})" title="Avanzar estado del ticket">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function applyMyTicketFilters() {
+            const search = document.getElementById('myTicketSearch').value.toLowerCase();
+            const statusFilter = document.getElementById('myTicketStatusFilter').value;
+            const priorityFilter = document.getElementById('myTicketPriorityFilter').value;
+
+            let filtered = myTickets.filter(t => {
+                const matchesSearch =
+                    (t.titulo || '').toLowerCase().includes(search) ||
+                    (t.usuario || '').toLowerCase().includes(search) ||
+                    ('T-' + String(t.id).padStart(6, '0')).includes(search);
+
+                const matchesStatus = !statusFilter || normalizeStatus(t.estado) === statusFilter;
+                const matchesPriority = !priorityFilter || normalizePriority(t.prioridad) === priorityFilter;
+
+                return matchesSearch && matchesStatus && matchesPriority;
+            });
+
+            renderMyTicketsTable(filtered);
+        }
+
+        function renderMyTicketsTable(list) {
+            const tbody = document.getElementById('myTicketsTableBody');
+            tbody.innerHTML = '';
+
+            list.forEach(ticket => {
+                // --- LÓGICA PARA EL ÍCONO DE SLA (Semáforo) ---
+                let slaIcon = '';
+                const slaVal = (ticket.sla || '').toString().toLowerCase();
+                if (slaVal === 'overdue' || slaVal === 'vencido') {
+                    slaIcon = '<i class="fas fa-fire" style="color: #ef4444;" title="SLA Vencido"></i> ';
+                } else if (slaVal === 'warning' || slaVal === 'por_vencer') {
+                    slaIcon = '<i class="fas fa-exclamation-triangle" style="color: #f59e0b;" title="SLA por vencer"></i> ';
+                } else if (slaVal === 'ok') {
+                    slaIcon = '<i class="fas fa-check-circle" style="color: #10b981;" title="SLA OK"></i> ';
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>T-${String(ticket.id || '').padStart(6, '0')}</strong></td>
+                    <td>${ticket.titulo || ''}</td>
+                    <td>${ticket.usuario || ''}</td>
+                    <td>
+                        <span class="priority ${ticket.prioridad || ''}" 
+                              onclick="cycleTicketPriority(${ticket.id})" 
+                              style="cursor: pointer; user-select: none;" 
+                              title="Clic para cambiar prioridad">${getPriorityText(ticket.prioridad)}</span>
+                    </td>
+                    <td>
+                        ${slaIcon}<span class="status ${ticket.estado || ''}" data-ticket-id="${ticket.id}">${getStatusText(ticket.estado)}</span>
+                    </td>
+                    <td>${formatDate(ticket.fecha)}</td>
+                    <td class="action-buttons">
+                        <button class="action-btn view" type="button" onclick="viewTicket(${ticket.id})" title="Ver detalles y responder">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn state" type="button" onclick="cycleTicketStatus(${ticket.id})" title="Avanzar estado del ticket">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function applyAllTicketFilters() {
+            const search = document.getElementById('allTicketSearch').value.toLowerCase();
+            const statusFilter = document.getElementById('allTicketStatusFilter').value;
+            const priorityFilter = document.getElementById('allTicketPriorityFilter').value;
+            const onlyUnassigned = document.getElementById('onlyUnassigned').checked;
+
+            let filtered = masterTickets.filter(t => {
+                const matchesSearch =
+                    (t.titulo || '').toLowerCase().includes(search) ||
+                    (t.usuario || '').toLowerCase().includes(search) ||
+                    ('T-' + String(t.id).padStart(6, '0')).includes(search);
+
+                const matchesStatus = !statusFilter || normalizeStatus(t.estado) === statusFilter;
+                const matchesPriority = !priorityFilter || normalizePriority(t.prioridad) === priorityFilter;
+                const matchesAssign = !onlyUnassigned || !(t.agente);
+
+                return matchesSearch && matchesStatus && matchesPriority && matchesAssign;
+            });
+
+            renderAllTicketsTable(filtered);
+        }
+
+        function renderAllTicketsTable(list) {
+            const tbody = document.getElementById('allTicketsTableBody');
+            tbody.innerHTML = '';
+
+            list.forEach(ticket => {
+                // --- LÓGICA PARA EL ÍCONO DE SLA (Semáforo) ---
+                let slaIcon = '';
+                const slaVal = (ticket.sla || '').toString().toLowerCase();
+                if (slaVal === 'overdue' || slaVal === 'vencido') {
+                    slaIcon = '<i class="fas fa-fire" style="color: #ef4444;" title="SLA Vencido"></i> ';
+                } else if (slaVal === 'warning' || slaVal === 'por_vencer') {
+                    slaIcon = '<i class="fas fa-exclamation-triangle" style="color: #f59e0b;" title="SLA por vencer"></i> ';
+                } else if (slaVal === 'ok') {
+                    slaIcon = '<i class="fas fa-check-circle" style="color: #10b981;" title="SLA OK"></i> ';
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>T-${String(ticket.id || '').padStart(6, '0')}</strong></td>
+                    <td>${ticket.titulo || ''}</td>
+                    <td>${ticket.usuario || ''}</td>
+                    <td>
+                        <span class="priority ${ticket.prioridad || ''}" 
+                              onclick="cycleTicketPriority(${ticket.id})" 
+                              style="cursor: pointer; user-select: none;" 
+                              title="Clic para cambiar prioridad">${getPriorityText(ticket.prioridad)}</span>
+                    </td>
+                    <td>
+                        ${slaIcon}<span class="status ${ticket.estado || ''}">${getStatusText(ticket.estado)}</span>
+                    </td>
+                    <td>${formatDate(ticket.fecha)}</td>
+                    <td>${ticket.agente || '-'}</td>
+                    <td class="action-buttons">
+                        <button class="action-btn view" type="button" onclick="viewTicket(${ticket.id})" title="Ver detalles">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn state" type="button" onclick="takeOrChangeTicket(${ticket.id})" title="Asignarme este ticket">
+                            <i class="fas fa-user-check"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function viewTicket(id) {
+            const ticket = masterTickets.find(t => t.id === id);
+            if (!ticket) return;
+
+            // --- LÓGICA DE BOTÓN IMPRIMIR ---
+            const printBtn = document.getElementById('printTicketBtn');
+            const estadoActual = normalizeStatus(ticket.estado); // Usamos tu función existente
+            
+            // Tu regla: Solo mostrar si es Resuelto (completed) o Cerrado (closed)
+            if (estadoActual === 'completed' || estadoActual === 'closed') {
+                printBtn.style.display = 'inline-flex'; // Mostrar
+                printBtn.href = `/ticket/${ticket.id}/imprimir/`;
+            } else {
+                printBtn.style.display = 'none'; // Ocultar
+            }
+            // -------------------------------
+
+            // Llenar datos básicos
+            document.getElementById('modalTicketTitle').textContent = ticket.titulo || 'Ticket';
+            document.getElementById('modalTicketId').textContent = 'ID: T-' + String(ticket.id || '').padStart(6, '0');
+            document.getElementById('modalTicketUser').textContent = 'Usuario: ' + (ticket.usuario || '');
+            document.getElementById('modalTicketDate').textContent = 'Fecha: ' + formatDate(ticket.fecha);
+            document.getElementById('modalTicketTech').textContent = 'Técnico: ' + (ticket.agente || 'Sin asignar');
+            document.getElementById('modalTicketPriority').textContent = getPriorityText(ticket.prioridad);
+            document.getElementById('modalTicketStatus').textContent = getStatusText(ticket.estado);
+            document.getElementById('modalTicketDescription').textContent = ticket.descripcion || '';
+
+            // --- LÓGICA DEL ARCHIVO (LO QUE FALTA) ---
+            const fileDiv = document.getElementById('modalTicketFile');
+            if (fileDiv) { // Verificamos que el div exista
+                if (ticket.archivo_url) {
+                    fileDiv.innerHTML = `
+                        <div style="padding: 10px; background: #e0f2fe; border-radius: 8px; border: 1px solid #bae6fd; display: flex; align-items: center;">
+                            <i class="fas fa-paperclip" style="color: #0284c7; margin-right: 10px;"></i> 
+                            <strong style="color: #0c4a6e; margin-right: 10px;">Evidencia Adjunta:</strong> 
+                            <a href="${ticket.archivo_url}" target="_blank" style="color: #0284c7; text-decoration: underline; font-weight: bold;">
+                                Ver / Descargar <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        </div>
+                    `;
+                    fileDiv.style.display = 'block';
+                } else {
+                    fileDiv.innerHTML = '';
+                    fileDiv.style.display = 'none';
+                }
+            }
+            // -----------------------------------------
+
+            // Lógica de comentarios (ya la tenías)
+            const commentsContainer = document.getElementById('commentsList');
+            if(commentsContainer) {
+                commentsContainer.innerHTML = '';
+                if(ticket.comentarios && ticket.comentarios.length > 0) {
+                    ticket.comentarios.forEach(c => {
+                        const div = document.createElement('div');
+                        div.style.marginBottom = '10px';
+                        div.style.borderBottom = '1px solid #eee';
+                        div.style.paddingBottom = '5px';
+                        div.innerHTML = `<strong>${c.autor}</strong> <small style="color:#666">${c.fecha}</small><br>${c.contenido}`;
+                        commentsContainer.appendChild(div);
+                    });
+                } else {
+                    commentsContainer.innerHTML = '<p style="color:#999; font-style:italic">No hay comentarios aún.</p>';
+                }
+            }
+
+            // Configurar formulario de respuesta
+            const replyForm = document.getElementById('replyForm');
+            if(replyForm) replyForm.action = `/ticket/${ticket.id}/comentar/`;
+
+            // --- LÓGICA DE PERMISOS: ¿PUEDO RESPONDER? ---
+            
+            // Verificamos si el agente asignado soy YO
+            if (ticket.agente === currentTechnicianUsername) {
+                // Es mío: Puedo comentar
+                replyForm.style.display = 'block';
+                
+                // Si había un mensaje de aviso previo, lo quitamos
+                const warningMsg = document.getElementById('ownershipWarning');
+                if(warningMsg) warningMsg.remove();
+                
+            } else {
+                // No es mío: Ocultar formulario
+                replyForm.style.display = 'none';
+                
+                // Mostrar aviso (si no existe ya)
+                if (!document.getElementById('ownershipWarning')) {
+                    const warning = document.createElement('div');
+                    warning.id = 'ownershipWarning';
+                    warning.style.padding = '15px';
+                    warning.style.background = '#fff3cd';
+                    warning.style.color = '#856404';
+                    warning.style.borderRadius = '5px';
+                    warning.style.marginTop = '15px';
+                    warning.style.textAlign = 'center';
+                    warning.innerHTML = '<i class="fas fa-lock"></i> Debes <strong>Tomar el Ticket</strong> para poder responder o cambiar su estado.';
+                    
+                    // Insertarlo donde estaba el formulario
+                    replyForm.parentNode.insertBefore(warning, replyForm);
+                }
+            }
+            // ---------------------------------------------
+
+            document.getElementById('ticketModal').classList.add('active');
+        }
+
+        function closeTicketModal() {
+            document.getElementById('ticketModal').classList.remove('active');
+        }
+
+        function cycleTicketStatus(id) {
+            // 1. Buscamos el ticket en memoria para saber cómo está ahora
+            const ticket = masterTickets.find(t => t.id === id);
+            if (!ticket) return;
+
+            // 2. Calculamos cuál sería el SIGUIENTE estado (Predicción)
+            let nextStateLabel = "";
+            let actionType = ""; // Para darle contexto al mensaje
+            const current = normalizeStatus(ticket.estado);
+
+            if (current === 'pending' || current === 'new') {
+                nextStateLabel = "EN PROGRESO";
+                actionType = "Iniciar trabajo";
+            } else if (current === 'in-progress') {
+                nextStateLabel = "RESUELTO";
+                actionType = "Marcar como solucionado";
+            } else if (current === 'completed' || current === 'resolved') {
+                nextStateLabel = "CERRADO";
+                actionType = "Finalizar y archivar ticket";
+            } else if (current === 'closed' || current === 'cerrado') {
+                nextStateLabel = "EN PROGRESO";
+                actionType = "Reabrir caso";
+            }
+
+            // 3. Construimos un mensaje claro
+            const mensaje = `⚠ Confirmación de Cambio de Estado\n\n` +
+                            `Ticket: T-${String(ticket.id).padStart(4, '0')} - ${ticket.titulo}\n` +
+                            `Acción: ${actionType}\n` +
+                            `Nuevo Estado: 👉 ${nextStateLabel}\n\n` +
+                            `¿Estás seguro de continuar?`;
+
+            // 4. Disparamos la alerta nativa del navegador
+            if (confirm(mensaje)) {
+                // Solo si el usuario dice "Aceptar", vamos al servidor
+                window.location.href = `/ticket/${id}/cambiar-estado/`;
+            } 
+            // Si dice "Cancelar", no pasa absolutamente nada.
+        }
+
+        function cycleTicketPriority(id) {
+            // Redirige a la vista que acabamos de crear
+            window.location.href = `/ticket/${id}/cambiar-prioridad/`;
+        }
+
+        function takeOrChangeTicket(id) {
+            const ticket = masterTickets.find(t => t.id === id);
+            if (!ticket) return;
+
+            // Si no tiene agente, lo tomamos
+            if (!ticket.agente || ticket.agente === '') {
+                if(confirm('¿Quieres tomar este ticket?')) {
+                    // Redirigir a la URL de Django
+                    window.location.href = `/ticket/${id}/tomar/`;
+                }
+            } else if (ticket.agente === currentTechnicianUsername) {
+                // Si ya es mío, mostramos modal para cambiar estado (o ciclo simple)
+                // Por ahora usemos tu ciclo simple pero deberíamos hacer un endpoint para esto
+                // Para simplificar hoy: cycleTicketStatus solo visual, 
+                // IDEAL: Crear view cambiar_estado y redirigir.
+                alert("Para cambiar estado, implementaremos endpoint pronto. Por ahora usa el admin.");
+            }
+        }
+
+        function normalizePriority(priority) {
+            if (!priority) return '';
+            const p = priority.toLowerCase();
+            switch (p) {
+                case 'alta': case 'high': return 'high';
+                case 'media': case 'medium': return 'medium';
+                case 'baja': case 'low': return 'low';
+                default: return p;
+            }
+        }
+
+        function getPriorityText(priority) {
+            const map = {
+                'high': 'Alta',
+                'medium': 'Media',
+                'low': 'Baja'
+            };
+            return map[normalizePriority(priority)] || 'Sin datos';
+        }
+
+        function getStatusText(status) {
+            const s = normalizeStatus(status);
+            const map = {
+                'pending': 'Pendiente',     // Estado 'new'
+                'in-progress': 'En Progreso',
+                'completed': 'Resuelto',    // Estado 'resolved'
+                'closed': 'Cerrado'         // <--- NUEVO ESTADO
+            };
+            return map[s] || 'Desconocido';
+        }
+
+        function normalizeStatus(status) {
+            if(!status) return 'pending';
+            switch (status.toLowerCase()) {
+                case 'nuevo': case 'new': return 'pending';
+                case 'en_progreso': case 'in-progress': return 'in-progress';
+                case 'resuelto': case 'resolved': case 'completed': return 'completed';
+                case 'cerrado': case 'closed': return 'closed'; // <--- AGREGAR ESTO
+                default: return status;
+            }
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const d = new Date(dateString);
+            if (isNaN(d)) return dateString;
+            return d.toLocaleDateString('es-ES');
+        }
+
+        function showNotification(message, type = 'info') {
+            const n = document.getElementById('notification');
+            n.textContent = message;
+            n.className = 'notification ' + type;
+            n.classList.add('show');
+            setTimeout(() => n.classList.remove('show'), 3000);
+        }
+    </script>
+
+    <script>
+        function loadFaqData() {
+            const container = document.getElementById('faqContainer');
+            container.innerHTML = '';
+            if(masterFaqs.length === 0) {
+                container.innerHTML = '<p class="text-muted">No hay FAQs registradas.</p>';
+                return;
+            }
+            masterFaqs.forEach(faq => {
+                const item = document.createElement('div');
+                item.style.borderBottom = '1px solid #eee';
+                item.style.padding = '15px 0';
+                item.innerHTML = `
+                    <div style="display: flex; justify-content: space-between;">
+                        <details style="flex: 1;">
+                            <summary style="font-weight: 600; cursor: pointer; color: var(--text-light);">
+                                <i class="fas fa-chevron-right" style="color: var(--primary); margin-right: 5px;"></i> ${faq.pregunta}
+                            </summary>
+                            <p style="margin-top: 10px; color: var(--text-muted); padding-left: 20px;">${faq.respuesta}</p>
+                        </details>
+                        <div style="min-width: 80px; text-align: right;">
+                            <button class="action-btn view" onclick="editFaq(${faq.id})"><i class="fas fa-edit"></i></button>
+                            <a href="/faq/eliminar/${faq.id}/" class="action-btn state" onclick="return confirm('¿Eliminar?')"><i class="fas fa-trash"></i></a>
+                        </div>
+                    </div>`;
+                container.appendChild(item);
+            });
+        }
+
+        function openFaqModal(id = null) {
+            const modal = document.getElementById('faqModal');
+            const title = document.getElementById('faqModalTitle');
+            document.getElementById('faqId').value = '';
+            document.getElementById('faqPregunta').value = '';
+            document.getElementById('faqRespuesta').value = '';
+
+            if(id) {
+                const faq = masterFaqs.find(f => f.id === id);
+                if(faq) {
+                    title.textContent = 'Editar Pregunta';
+                    document.getElementById('faqId').value = faq.id;
+                    document.getElementById('faqPregunta').value = faq.pregunta;
+                    document.getElementById('faqRespuesta').value = faq.respuesta;
+                }
+            } else {
+                title.textContent = 'Nueva Pregunta';
+            }
+            modal.classList.add('active');
+        }
+
+        function closeFaqModal() { document.getElementById('faqModal').classList.remove('active'); }
+        window.editFaq = function(id) { openFaqModal(id); }
+    </script>
+
+    {% if messages %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            {% for message in messages %}
+                setTimeout(function() {
+                    // Usamos showMessage para usuario y showNotification para tecnico
+                    // Asegúrate de usar el nombre de función correcto según el archivo
+                    if (typeof showMessage === 'function') {
+                        showMessage("{{ message|escapejs }}", "{{ message.tags }}");
+                    } else if (typeof showNotification === 'function') {
+                        showNotification("{{ message|escapejs }}", "{{ message.tags }}");
+                    }
+                }, 500 * {{ forloop.counter }});
+            {% endfor %}
+        });
+    </script>
+    {% endif %}
+</body>
+</html>
