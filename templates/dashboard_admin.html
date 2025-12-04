@@ -1413,6 +1413,7 @@
             <ul class="nav-links">
                 <li class="active"><a href="#" onclick="showPage('dashboard')"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
                 <li><a href="#" onclick="showPage('tickets')"><i class="fas fa-ticket-alt"></i> Gestionar Tickets</a></li>
+                <li><a href="#" onclick="showPage('areas')"><i class="fas fa-building"></i> Gestionar Áreas</a></li>
                 <li><a href="#" onclick="showPage('categorias')"><i class="fas fa-tags"></i> Gestionar Categorías</a></li>
                 <li><a href="#" onclick="showPage('usuarios')"><i class="fas fa-users"></i> Gestionar Usuarios</a></li>
                 <li><a href="#" onclick="showPage('reportes')"><i class="fas fa-chart-pie"></i> Reportes</a></li>
@@ -1519,6 +1520,7 @@
                                 <tr>
                                     <th>ID</th>
                                     <th>Título</th>
+                                    <th>Área</th>
                                     <th>Usuario</th>
                                     <th>Prioridad</th>
                                     <th>Estado</th>
@@ -1583,6 +1585,7 @@
                                 <tr>
                                     <th>ID</th>
                                     <th>Título</th>
+                                    <th>Área</th>
                                     <th>Usuario</th>
                                     <th>Prioridad</th>
                                     <th>Estado</th>
@@ -1597,6 +1600,28 @@
                         </table>
                     </div>
                 </div>
+
+                <!-- Página: Gestión de Áreas -->
+                <div id="areas-page" class="page-content">
+                    <div class="header-actions" style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                        <h3>Gestión de Áreas</h3>
+                        <button class="btn btn-primary" onclick="openAreaModal()">+ Nueva Área</button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Descripción</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="areasBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
 
                 <div id="categorias-page" class="page-content">
                     <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -1920,6 +1945,10 @@
                     <textarea class="form-control" id="ticketDescription" rows="4" required style="padding: 10px 12px;"></textarea>
                 </div>
                 <div class="form-group">
+                    <label>Área Afectada</label>
+                    <p id="modalTicketArea" style="font-weight: 600; color: var(--text-light);"></p>
+                </div>
+                <div class="form-group">
                     <label>Prioridad</label>
                     <select class="form-control" id="ticketPriority" required style="padding: 10px 12px;">
                         <option value="low">Baja</option>
@@ -2001,6 +2030,29 @@
         </div>
     </div>
 
+    <div class="modal" id="areaModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeAreaModal()">×</button>
+            <h2 id="areaModalTitle">Nueva Área</h2>
+            <form id="areaForm" method="POST" action="{% url 'guardar_area' %}">
+                {% csrf_token %}
+                <input type="hidden" name="area_id" id="areaId">
+                <div class="form-group">
+                    <label>Nombre</label>
+                    <input type="text" class="form-control" name="nombre" id="areaNombre" required>
+                </div>
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea class="form-control" name="descripcion" id="areaDescripcion"></textarea>
+                </div>
+                <div style="text-align: right; margin-top: 20px;">
+                    <button type="button" class="btn btn-outline" onclick="closeAreaModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="modal" id="faqModal">
         <div class="modal-content">
             <button class="modal-close" onclick="closeFaqModal()">×</button>
@@ -2031,16 +2083,17 @@
     <script>
         // ===== SISTEMA COMPLETO DE ADMINISTRACIÓN =====
         
-        // ===== DATOS REALES DESDE DJANGO =====
-        // Usamos la etiqueta safe para que Django imprima el JSON tal cual
-        let masterUsers = [];
-        let masterTickets = [];
-        let masterCategories = [];
-        let masterFaqs = [];
+        // ===== DATOS REALES DESDE DJANGO (CORREGIDO) =====
+        // El filtro |default:"[]" asegura que nunca quede el espacio vacío
+        const masterUsers = {{ users_json|default:"[]"|safe }};
+        const masterTickets = {{ tickets_json|default:"[]"|safe }};
+        const masterCategories = {{ categorias_json|default:"[]"|safe }};
+        const masterAreas = {{ areas_json|default:"[]"|safe }};
+        const masterFaqs = {{ faqs_json|default:"[]"|safe }};
         
         // Variables de trabajo
-        let currentUsers = [];
-        let currentTickets = [];
+        let currentUsers = [...masterUsers];
+        let currentTickets = [...masterTickets];
         let currentTheme = 'light';
         let charts = {};
 
@@ -2075,17 +2128,12 @@
         }
 
         function loadInitialData() {
-            // Usar DIRECTAMENTE los datos de Django.
-            // Si está vacío, que sea un array vacío, NO mocks.
-            masterUsers = {{ users_json|safe }} || [];
-            masterTickets = {{ tickets_json|safe }} || [];
-            masterCategories = {{ categorias_json|safe }} || [];
-            masterFaqs = {{ faqs_json|safe }} || [];
+            // Solo llamamos a las funciones de carga
+            // (Las variables master ya están listas desde el inicio)
             
-            // Cargar usuarios
-            loadUsersData();
-            // Cargar tickets
-            loadTicketsData(); // Esto actualiza las métricas reales
+            if (typeof loadUsersData === 'function') loadUsersData();
+            if (typeof loadTicketsData === 'function') loadTicketsData();
+            if (typeof updateDashboardStats === 'function') updateDashboardStats();
         }
 
                     const statusFilter = document.getElementById('filterStatus');
@@ -2373,6 +2421,7 @@
                 'reportes': 'Reportes del Sistema',
                 'configuracion': 'Configuración del Sistema',
                 
+                'areas': 'Gestión de Áreas',
                 // --- AGREGA ESTAS 3 LÍNEAS ---
                 'categorias': 'Gestión de Categorías',
                 'leaderboard': 'Ranking de Técnicos',
@@ -2411,6 +2460,9 @@
                     break;
                 case 'usuarios':
                     loadUsersData();
+                    break;
+                case 'areas':
+                    loadAreasData();
                     break;
                 case 'categorias':   // <--- NUEVO CASO
                     loadCategoriesData();
@@ -2670,24 +2722,33 @@
             currentTickets.forEach(ticket => {
                 const row = document.createElement('tr');
 
-                // --- LÓGICA PARA EL ÍCONO DE SLA (Semáforo) ---
+                // --- LÓGICA SLA MEJORADA (PARA EL PROFESOR) ---
                 let slaIcon = '';
-                // Normalizamos valores por si vienen en español/inglés
-                const slaVal = (ticket.sla || '').toString().toLowerCase();
-                if (slaVal === 'overdue' || slaVal === 'vencido') {
-                    slaIcon = '<i class="fas fa-fire" style="color: #ef4444;" title="SLA Vencido" aria-hidden="true"></i>';
-                } else if (slaVal === 'warning' || slaVal === 'por_vencer' || slaVal === 'advertencia') {
-                    slaIcon = '<i class="fas fa-exclamation-triangle" style="color: #f59e0b;" title="SLA por vencer" aria-hidden="true"></i>';
-                } else if (slaVal === 'ok' || slaVal === 'ok') {
-                    slaIcon = '<i class="fas fa-check-circle" style="color: #10b981;" title="SLA OK" aria-hidden="true"></i>';
+                let slaTexto = '';
+                
+                // Definimos el texto explicativo (El "Tooltip")
+                const infoSLA = `Prioridad: ${getPriorityText(ticket.prioridad)}\nLímite: ${ticket.horas_limite}h\nTranscurrido: ${ticket.horas}h`;
+
+                if (ticket.sla === 'overdue') {
+                    // Vencido: Fuego + Texto de cuánto se pasó
+                    slaIcon = `<i class="fas fa-fire" style="color: #ef4444; cursor: help;" title="${infoSLA} (VENCIDO)"></i>`;
+                    slaTexto = `<small style="color: #ef4444; font-size: 0.7rem; display: block;">+${(ticket.horas - ticket.horas_limite).toFixed(1)}h</small>`;
+                } else if (ticket.sla === 'warning') {
+                    // Riesgo: Alerta
+                    slaIcon = `<i class="fas fa-exclamation-triangle" style="color: #f59e0b; cursor: help;" title="${infoSLA} (POR VENCER)"></i>`;
+                    slaTexto = `<small style="color: #f59e0b; font-size: 0.7rem; display: block;">Quedan ${(ticket.horas_limite - ticket.horas).toFixed(1)}h</small>`;
                 } else {
-                    // Si no hay SLA, dejamos un pequeño separador para mantener alineación
-                    slaIcon = '<span style="display:inline-block; width:18px;"></span>';
+                    // A tiempo: Check
+                    slaIcon = `<i class="fas fa-check-circle" style="color: #10b981; cursor: help;" title="${infoSLA} (EN PLAZO)"></i>`;
+                    // Opcional: no mostrar texto si está bien para no ensuciar
+                    slaTexto = `<small style="color: #10b981; font-size: 0.7rem; display: block;">${ticket.horas}h / ${ticket.horas_limite}h</small>`; 
                 }
+                // ---------------------------------------------
 
                 row.innerHTML = `
                     <td><strong>T-${ticket.id.toString().padStart(6, '0')}</strong></td>
                     <td>${ticket.titulo}</td>
+                    <td>${ticket.area || '-'}</td>
                     <td>${ticket.usuario}</td>
                     <td>
                         <span class="priority ${ticket.prioridad}" 
@@ -2701,7 +2762,9 @@
                         <span class="status ${normalizeStatus(ticket.estado)}">
                             ${getStatusText(ticket.estado)}
                         </span>
-                        <span>${slaIcon}</span>
+                        <div style="text-align: center; line-height: 1;">
+                            ${slaIcon} ${slaTexto}
+                        </div>
                     </td>
                     <td>${formatDate(ticket.fecha)}</td>
                     <td>${ticket.agente || '-'}</td>
@@ -2725,12 +2788,41 @@
             
             recentTickets.forEach(ticket => {
                 const row = document.createElement('tr');
+
+                // --- COPIA ESTE BLOQUE QUE YA TIENES EN LA OTRA FUNCIÓN ---
+                let slaIcon = '';
+                let slaTexto = '';
+                
+                // Definimos el texto explicativo (El "Tooltip")
+                const infoSLA = `Prioridad: ${getPriorityText(ticket.prioridad)}\nLímite: ${ticket.horas_limite}h\nTranscurrido: ${ticket.horas}h`;
+
+                if (ticket.sla === 'overdue') {
+                    // Vencido: Fuego + Texto de cuánto se pasó
+                    slaIcon = `<i class="fas fa-fire" style="color: #ef4444; cursor: help;" title="${infoSLA} (VENCIDO)"></i>`;
+                    slaTexto = `<small style="color: #ef4444; font-size: 0.7rem; display: block;">+${(ticket.horas - ticket.horas_limite).toFixed(1)}h</small>`;
+                } else if (ticket.sla === 'warning') {
+                    // Riesgo: Alerta
+                    slaIcon = `<i class="fas fa-exclamation-triangle" style="color: #f59e0b; cursor: help;" title="${infoSLA} (POR VENCER)"></i>`;
+                    slaTexto = `<small style="color: #f59e0b; font-size: 0.7rem; display: block;">Quedan ${(ticket.horas_limite - ticket.horas).toFixed(1)}h</small>`;
+                } else {
+                    // A tiempo: Check
+                    slaIcon = `<i class="fas fa-check-circle" style="color: #10b981; cursor: help;" title="${infoSLA} (EN PLAZO)"></i>`;
+                    slaTexto = `<small style="color: #10b981; font-size: 0.7rem; display: block;">${ticket.horas}h / ${ticket.horas_limite}h</small>`; 
+                }
+                // ----------------------------------------------------------
+
                 row.innerHTML = `
                     <td><strong>T-${ticket.id.toString().padStart(6, '0')}</strong></td>
                     <td>${ticket.titulo}</td>
+                    <td>${ticket.area || '-'}</td>
                     <td>${ticket.usuario}</td>
                     <td><span class="priority ${ticket.prioridad}">${getPriorityText(ticket.prioridad)}</span></td>
-                    <td><span class="status ${normalizeStatus(ticket.estado)}">${getStatusText(ticket.estado)}</span></td>
+                    <td style="display: flex; align-items: center; gap: 10px;">
+                        <span class="status ${normalizeStatus(ticket.estado)}" data-ticket-id="${ticket.id}">${getStatusText(ticket.estado)}</span>
+                        <div style="text-align: center; line-height: 1;">
+                            ${slaIcon}
+                        </div>
+                    </td>
                     <td>${formatDate(ticket.fecha)}</td>
                     <td>${ticket.agente || '-'}</td>
                     <td class="action-buttons">
@@ -2939,6 +3031,7 @@ window.viewTicket = function(ticketId) {
                 if (titleEl) titleEl.textContent = 'Editar Ticket';
                 document.getElementById('ticketTitle').value = ticket.titulo || '';
                 document.getElementById('ticketDescription').value = ticket.descripcion || '';
+                document.getElementById('modalTicketArea').textContent = ticket.area || 'No especificada';
                 document.getElementById('ticketPriority').value = ticket.prioridad || 'low';
                 if (statusSelect) statusSelect.value = ticket.estado || 'pending';
                 if (ticket.agente) {
@@ -3385,17 +3478,9 @@ function handleTicketSubmit(e) {
         // ===== SISTEMA DE CONFIGURACIÓN =====
         
         function loadSettings() {
-            // Cargar configuración desde localStorage o usar valores por defecto
-            const settings = JSON.parse(localStorage.getItem('adminSettings')) || {};
-            
-            document.getElementById('emailNotifications').checked = settings.emailNotifications !== false;
-            document.getElementById('autoAssignTickets').checked = settings.autoAssignTickets || false;
-            document.getElementById('autoReminders').checked = settings.autoReminders !== false;
-            document.getElementById('sessionDuration').value = settings.sessionDuration || 60;
-            document.getElementById('loginAttempts').value = settings.loginAttempts || 5;
-            document.getElementById('passwordExpiry').value = settings.passwordExpiry || 90;
-            document.getElementById('colorTheme').value = settings.colorTheme || 'light';
-            document.getElementById('language').value = settings.language || 'es';
+            // La vista de configuración es solo informativa ahora,
+            // por lo que esta función no necesita ejecutar ninguna acción.
+            console.log("Cargando página de configuración (informativa).");
         }
 
         function saveSettings() {
@@ -3857,7 +3942,77 @@ function handleTicketSubmit(e) {
     // Función global para el botón editar de la tabla
     window.editCategory = function(id) {
         openCategoryModal(id);
+        }
+
+    // ===== GESTIÓN DE ÁREAS (CORREGIDO) =====
+
+    function loadAreasData() {
+        const tbody = document.getElementById('areasBody');
+        if (!tbody) return; // Si no estamos en la pestaña correcta, salir
+        
+        tbody.innerHTML = '';
+
+        // Verificar si hay datos
+        if (!masterAreas || masterAreas.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:#94a3b8;">No hay áreas registradas. Crea la primera.</td></tr>';
+            return;
+        }
+
+        masterAreas.forEach(a => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${a.id}</strong></td>
+                <td>${a.nombre}</td>
+                <td>${a.descripcion || '-'}</td>
+                <td class="action-buttons">
+                    <button class="action-btn edit" onclick="editArea(${a.id})" title="Editar Área">
+                        <i class="fas fa-edit"></i> EDITAR
+                    </button>
+                    <a href="/area/eliminar/${a.id}/" class="action-btn delete" onclick="return confirm('¿Estás seguro de eliminar el área ${a.nombre}?')" title="Eliminar" style="text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
+                        <i class="fas fa-trash"></i> BORRAR
+                    </a>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
     }
+
+    function openAreaModal(id = null) {
+        const modal = document.getElementById('areaModal');
+        if (!modal) {
+            console.error("Error: No se encontró el modal 'areaModal'");
+            return;
+        }
+
+        // Resetear formulario
+        document.getElementById('areaId').value = '';
+        document.getElementById('areaNombre').value = '';
+        document.getElementById('areaDescripcion').value = '';
+        document.getElementById('areaModalTitle').textContent = 'Nueva Área';
+        
+        // Si es edición, llenar datos
+        if (id) {
+            const area = masterAreas.find(a => a.id === id);
+            if (area) {
+                document.getElementById('areaId').value = area.id;
+                document.getElementById('areaNombre').value = area.nombre;
+                document.getElementById('areaDescripcion').value = area.descripcion;
+                document.getElementById('areaModalTitle').textContent = 'Editar Área';
+            }
+        }
+        
+        modal.classList.add('active');
+    }
+
+    function closeAreaModal() {
+        const modal = document.getElementById('areaModal');
+        if (modal) modal.classList.remove('active');
+    }
+    
+    // Hacemos la función global para que el botón onclick la encuentre
+    window.editArea = function(id) {
+        openAreaModal(id);
+    };
 
     function loadFaqData() {
         const container = document.getElementById('faqContainer');

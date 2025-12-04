@@ -14,6 +14,19 @@ class Categoria(models.Model):
     def __str__(self):
         return self.nombre
 
+# --- NUEVO MODELO ---
+class Area(models.Model):
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(blank=True)
+    activo = models.BooleanField(default=True)
+    
+    class Meta:
+        verbose_name = "Área"
+        verbose_name_plural = "Áreas"
+    
+    def __str__(self):
+        return self.nombre
+
 class Ticket(models.Model):
     ESTADO_CHOICES = [
         ('new', 'Nuevo'),
@@ -40,6 +53,9 @@ class Ticket(models.Model):
     fecha_creacion = models.DateTimeField(default=timezone.now)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
     fecha_cierre = models.DateTimeField(null=True, blank=True)
+
+    # --- NUEVO CAMPO ---
+    area = models.ForeignKey(Area, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Área Afectada")
 
     # --- NUEVOS CAMPOS DE CALIFICACIÓN ---
     calificacion = models.IntegerField(null=True, blank=True, choices=[(i, i) for i in range(1, 6)])

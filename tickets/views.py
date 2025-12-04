@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.views.decorators.http import require_POST
 from django.contrib import messages
-from .models import Ticket, Categoria, UserProfile, Comentario, HistorialTicket, FAQ
+from .models import Ticket, Categoria, UserProfile, Comentario, HistorialTicket, FAQ, Area
 import json
 from django.urls import reverse
 from django.core.serializers.json import DjangoJSONEncoder
@@ -147,6 +147,7 @@ def dashboard_admin(request):
             'id': t.id,
             'titulo': t.titulo,
             'categoria': t.categoria.nombre if t.categoria else "Sin Categoría", # Asegúrate de que coincida con tu código anterior
+            'area': t.area.nombre if t.area else "No especificada",
             'usuario': t.solicitante.username,
             'prioridad': t.prioridad, 
             'estado': t.estado,       
@@ -157,6 +158,7 @@ def dashboard_admin(request):
             'cerrado': True if t.fecha_cierre else False,
             'calificacion': t.calificacion,
             'sla': sla_status,
+            'horas_limite': horas_limite,
             # ------------------------------------
             
             'agente': t.asignado_a.username if t.asignado_a else "",
@@ -188,11 +190,17 @@ def dashboard_admin(request):
         })
     # -------------------------------------------------------------------------------------
 
+    # 4. ÁREAS
+    areas_qs = Area.objects.filter(activo=True)
+    areas_data = [{'id': a.id, 'nombre': a.nombre, 'descripcion': a.descripcion} for a in areas_qs]
+
+
     context = {
         'users_json': json.dumps(users_data, cls=DjangoJSONEncoder),
         'tickets_json': json.dumps(tickets_data, cls=DjangoJSONEncoder),
         'categorias_json': json.dumps(categorias_data, cls=DjangoJSONEncoder), 
         'faqs_json': json.dumps(faqs_data, cls=DjangoJSONEncoder), # <--- NUEVA LÍNEA
+        'areas_json': json.dumps(areas_data, cls=DjangoJSONEncoder),
     }
 
     return render(request, 'dashboard_admin.html', context)
@@ -230,6 +238,7 @@ def dashboard_user(request):
             'id': t.id,
             'titulo': t.titulo,
             'categoria': t.categoria.nombre if t.categoria else "Sin Categoría",
+            'area': t.area.nombre if t.area else "No especificada",
             'prioridad': t.prioridad, 
             'estado': t.estado,       
             'fecha_creacion': t.fecha_creacion.strftime('%Y-%m-%d %H:%M'),
@@ -242,6 +251,7 @@ def dashboard_user(request):
 
     # 3. Categorías
     categorias = Categoria.objects.filter(activo=True)
+    areas = Area.objects.filter(activo=True)
     
     # --- OBTENER FAQs (Poner esto en dashboard_user, dashboard_admin y dashboard_tecnico) ---
     faqs_qs = FAQ.objects.filter(activo=True).order_by('-fecha_creacion')
@@ -257,6 +267,7 @@ def dashboard_user(request):
     context = {
         'tickets_json': json.dumps(tickets_data, cls=DjangoJSONEncoder),
         'categorias': categorias,
+        'areas': areas,
         'faqs_json': json.dumps(faqs_data, cls=DjangoJSONEncoder), # <--- NUEVA LÍNEA
     }
     return render(request, 'dashboard_user.html', context)
@@ -265,12 +276,17 @@ def dashboard_user(request):
 def crear_ticket(request):
     # Obtener categorías
     categorias = Categoria.objects.filter(activo=True)
+    # --- NUEVO: OBTENER ÁREAS ---
+    areas = Area.objects.filter(activo=True)
 
     if request.method == 'POST':
         titulo = request.POST.get('titulo')
         categoria_id = request.POST.get('categoria')
         descripcion = request.POST.get('descripcion')
-
+        # --- NUEVO: CAPTURAR EL ÁREA ---
+        area = request.POST.get('area')
+        area_obj = get_object_or_404(Area, id=area) if area else None
+        
         # Capturar el archivo
         archivo = request.FILES.get('archivo')
 
@@ -283,6 +299,7 @@ def crear_ticket(request):
         nuevo_ticket = Ticket.objects.create(
             titulo=titulo,
             categoria=categoria,
+            area=area_obj,  # <--- GUARDARLO AQUÍ
             prioridad=prioridad_defecto,
             descripcion=descripcion,
             solicitante=request.user,
@@ -337,7 +354,7 @@ def crear_ticket(request):
         messages.success(request, 'Ticket creado exitosamente')
         return redirect('dashboard_user') 
     
-    return render(request, 'crear_ticket.html', {'categorias': categorias})
+    return render(request, 'crear_ticket.html', {'categorias': categorias, 'areas': areas})
 
 @login_required
 def mis_tickets(request):
@@ -589,6 +606,7 @@ def dashboard_tecnico(request):
             'id': t.id,
             'titulo': t.titulo,
             'usuario': t.solicitante.username,
+            'area': t.area.nombre if t.area else "No especificada",
             'categoria': t.categoria.nombre if t.categoria else "General",
             'prioridad': t.prioridad, 
             'estado': t.estado,       
@@ -598,6 +616,7 @@ def dashboard_tecnico(request):
             'comentarios': comentarios_list,
             'archivo_url': t.archivo.url if t.archivo else None, # --- LÍNEA AGREGADA/MODIFICADA ---
             'sla': sla_status,
+            'horas_limite': horas_limite,
         })
 
     # --- OBTENER FAQs (Poner esto en dashboard_user, dashboard_admin y dashboard_tecnico) ---
@@ -865,3 +884,50 @@ def cambiar_prioridad_ticket(request, ticket_id):
         return redirect(url)
     else:
         return redirect('dashboard_tecnico')
+
+@login_required
+@require_POST
+def guardar_area(request):
+    # Solo staff/admin puede gestionar áreas
+    if not request.user.is_staff:
+        messages.error(request, 'No tienes permisos.')
+        return redirect('dashboard_user')
+
+    try:
+        area_id = request.POST.get('area_id')
+        nombre = request.POST.get('nombre')
+        descripcion = request.POST.get('descripcion')
+        
+        if area_id:
+            # Editar existente
+            area = get_object_or_404(Area, id=area_id)
+            area.nombre = nombre
+            area.descripcion = descripcion
+            area.save()
+            messages.success(request, f'Área "{nombre}" actualizada correctamente.')
+        else:
+            # Crear nueva
+            Area.objects.create(nombre=nombre, descripcion=descripcion)
+            messages.success(request, f'Área "{nombre}" creada correctamente.')
+            
+    except Exception as e:
+        messages.error(request, f'Error al guardar área: {str(e)}')
+
+    # Redirigir manteniendo la pestaña
+    response = redirect('dashboard_admin')
+    response['Location'] += '?tab=areas'
+    return response
+
+@login_required
+def eliminar_area(request, area_id):
+    if not request.user.is_staff:
+        messages.error(request, 'No tienes permisos.')
+        return redirect('dashboard_user')
+        
+    area = get_object_or_404(Area, id=area_id)
+    area.delete()
+    messages.success(request, 'Área eliminada correctamente.')
+    
+    response = redirect('dashboard_admin')
+    response['Location'] += '?tab=areas'
+    return response

@@ -767,6 +767,7 @@
                             <tr>
                                 <th>ID</th>
                                 <th>Título</th>
+                                <th>Área</th>
                                 <th>Usuario</th>
                                 <th>Prioridad</th>
                                 <th>Estado</th>
@@ -807,6 +808,7 @@
                             <tr>
                                 <th>ID</th>
                                 <th>Título</th>
+                                <th>Área</th>
                                 <th>Usuario</th>
                                 <th>Prioridad</th>
                                 <th>Estado</th>
@@ -851,6 +853,7 @@
                             <tr>
                                 <th>ID</th>
                                 <th>Título</th>
+                                <th>Área</th>
                                 <th>Usuario</th>
                                 <th>Prioridad</th>
                                 <th>Estado</th>
@@ -882,8 +885,10 @@
             <h2 id="modalTicketTitle">Detalle del Ticket</h2>
             <p class="meta" id="modalTicketId"></p>
             <p class="meta" id="modalTicketUser"></p>
+            <p class="meta" id="modalTicketArea"></p>
             <p class="meta" id="modalTicketDate"></p>
             <p class="meta" id="modalTicketTech"></p>
+            <p><strong>Área:</strong> <span id="modalTicketArea"></span></p>
             <p><strong>Prioridad:</strong> <span id="modalTicketPriority"></span></p>
             <p><strong>Estado:</strong> <span id="modalTicketStatus"></span></p>
             <p><strong>Descripción:</strong></p>
@@ -1107,6 +1112,7 @@
                 tr.innerHTML = `
                     <td><strong>T-${String(ticket.id || '').padStart(6, '0')}</strong></td>
                     <td>${ticket.titulo || ''}</td>
+                    <td>${ticket.area || '-'}</td>
                     <td>${ticket.usuario || ''}</td>
                     <td>
                         <span class="priority ${ticket.prioridad || ''}" 
@@ -1155,21 +1161,33 @@
             tbody.innerHTML = '';
 
             list.forEach(ticket => {
-                // --- LÓGICA PARA EL ÍCONO DE SLA (Semáforo) ---
+                // --- LÓGICA SLA MEJORADA (PARA EL PROFESOR) ---
                 let slaIcon = '';
-                const slaVal = (ticket.sla || '').toString().toLowerCase();
-                if (slaVal === 'overdue' || slaVal === 'vencido') {
-                    slaIcon = '<i class="fas fa-fire" style="color: #ef4444;" title="SLA Vencido"></i> ';
-                } else if (slaVal === 'warning' || slaVal === 'por_vencer') {
-                    slaIcon = '<i class="fas fa-exclamation-triangle" style="color: #f59e0b;" title="SLA por vencer"></i> ';
-                } else if (slaVal === 'ok') {
-                    slaIcon = '<i class="fas fa-check-circle" style="color: #10b981;" title="SLA OK"></i> ';
+                let slaTexto = '';
+                
+                // Definimos el texto explicativo (El "Tooltip")
+                // NOTA: Aquí ticket.horas no existe aún, usamos una simulación o esperamos a que lo envíe el backend.
+                // Por ahora, el backend ya lo envía, así que podemos usarlo.
+                const horasTranscurridas = ticket.horas_transcurridas || 0; // Usamos el dato del backend si existe
+                const infoSLA = `Prioridad: ${getPriorityText(ticket.prioridad)}\nLímite: ${ticket.horas_limite}h\nTranscurrido: ${horasTranscurridas.toFixed(1)}h`;
+
+                if (ticket.sla === 'overdue') {
+                    slaIcon = `<i class="fas fa-fire" style="color: #ef4444; cursor: help;" title="${infoSLA} (VENCIDO)"></i>`;
+                    slaTexto = `<small style="color: #ef4444; font-size: 0.7rem; display: block;">+${(horasTranscurridas - ticket.horas_limite).toFixed(1)}h</small>`;
+                } else if (ticket.sla === 'warning') {
+                    slaIcon = `<i class="fas fa-exclamation-triangle" style="color: #f59e0b; cursor: help;" title="${infoSLA} (POR VENCER)"></i>`;
+                    slaTexto = `<small style="color: #f59e0b; font-size: 0.7rem; display: block;">Quedan ${(ticket.horas_limite - horasTranscurridas).toFixed(1)}h</small>`;
+                } else {
+                    slaIcon = `<i class="fas fa-check-circle" style="color: #10b981; cursor: help;" title="${infoSLA} (EN PLAZO)"></i>`;
+                    slaTexto = `<small style="color: #10b981; font-size: 0.7rem; display: block;">${horasTranscurridas.toFixed(1)}h / ${ticket.horas_limite}h</small>`; 
                 }
+                // ---------------------------------------------
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><strong>T-${String(ticket.id || '').padStart(6, '0')}</strong></td>
                     <td>${ticket.titulo || ''}</td>
+                    <td>${ticket.area || '-'}</td>
                     <td>${ticket.usuario || ''}</td>
                     <td>
                         <span class="priority ${ticket.prioridad || ''}" 
@@ -1177,8 +1195,14 @@
                               style="cursor: pointer; user-select: none;" 
                               title="Clic para cambiar prioridad">${getPriorityText(ticket.prioridad)}</span>
                     </td>
-                    <td>
-                        ${slaIcon}<span class="status ${ticket.estado || ''}" data-ticket-id="${ticket.id}">${getStatusText(ticket.estado)}</span>
+                    <td style="display: flex; align-items: center; gap: 10px;">
+                        <span class="status ${normalizeStatus(ticket.estado)}">
+                            ${getStatusText(ticket.estado)}
+                        </span>
+                        <div style="text-align: center; line-height: 1;">
+                            ${slaIcon}
+                            ${slaTexto}
+                        </div>
                     </td>
                     <td>${formatDate(ticket.fecha)}</td>
                     <td class="action-buttons">
@@ -1221,21 +1245,31 @@
             tbody.innerHTML = '';
 
             list.forEach(ticket => {
-                // --- LÓGICA PARA EL ÍCONO DE SLA (Semáforo) ---
+                // --- LÓGICA SLA MEJORADA (PARA EL PROFESOR) ---
                 let slaIcon = '';
-                const slaVal = (ticket.sla || '').toString().toLowerCase();
-                if (slaVal === 'overdue' || slaVal === 'vencido') {
-                    slaIcon = '<i class="fas fa-fire" style="color: #ef4444;" title="SLA Vencido"></i> ';
-                } else if (slaVal === 'warning' || slaVal === 'por_vencer') {
-                    slaIcon = '<i class="fas fa-exclamation-triangle" style="color: #f59e0b;" title="SLA por vencer"></i> ';
-                } else if (slaVal === 'ok') {
-                    slaIcon = '<i class="fas fa-check-circle" style="color: #10b981;" title="SLA OK"></i> ';
+                let slaTexto = '';
+                
+                // Reutilizamos la misma lógica que en la tabla del admin
+                const horasTranscurridas = ticket.horas_transcurridas || 0;
+                const infoSLA = `Prioridad: ${getPriorityText(ticket.prioridad)}\nLímite: ${ticket.horas_limite}h\nTranscurrido: ${horasTranscurridas.toFixed(1)}h`;
+
+                if (ticket.sla === 'overdue') {
+                    slaIcon = `<i class="fas fa-fire" style="color: #ef4444; cursor: help;" title="${infoSLA} (VENCIDO)"></i>`;
+                    slaTexto = `<small style="color: #ef4444; font-size: 0.7rem; display: block;">+${(horasTranscurridas - ticket.horas_limite).toFixed(1)}h</small>`;
+                } else if (ticket.sla === 'warning') {
+                    slaIcon = `<i class="fas fa-exclamation-triangle" style="color: #f59e0b; cursor: help;" title="${infoSLA} (POR VENCER)"></i>`;
+                    slaTexto = `<small style="color: #f59e0b; font-size: 0.7rem; display: block;">Quedan ${(ticket.horas_limite - horasTranscurridas).toFixed(1)}h</small>`;
+                } else {
+                    slaIcon = `<i class="fas fa-check-circle" style="color: #10b981; cursor: help;" title="${infoSLA} (EN PLAZO)"></i>`;
+                    slaTexto = `<small style="color: #10b981; font-size: 0.7rem; display: block;">${horasTranscurridas.toFixed(1)}h / ${ticket.horas_limite}h</small>`; 
                 }
+                // ---------------------------------------------
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><strong>T-${String(ticket.id || '').padStart(6, '0')}</strong></td>
                     <td>${ticket.titulo || ''}</td>
+                    <td>${ticket.area || '-'}</td>
                     <td>${ticket.usuario || ''}</td>
                     <td>
                         <span class="priority ${ticket.prioridad || ''}" 
@@ -1243,8 +1277,14 @@
                               style="cursor: pointer; user-select: none;" 
                               title="Clic para cambiar prioridad">${getPriorityText(ticket.prioridad)}</span>
                     </td>
-                    <td>
-                        ${slaIcon}<span class="status ${ticket.estado || ''}">${getStatusText(ticket.estado)}</span>
+                    <td style="display: flex; align-items: center; gap: 10px;">
+                        <span class="status ${normalizeStatus(ticket.estado)}">
+                            ${getStatusText(ticket.estado)}
+                        </span>
+                        <div style="text-align: center; line-height: 1;">
+                            ${slaIcon}
+                            ${slaTexto}
+                        </div>
                     </td>
                     <td>${formatDate(ticket.fecha)}</td>
                     <td>${ticket.agente || '-'}</td>
@@ -1281,9 +1321,11 @@
             // Llenar datos básicos
             document.getElementById('modalTicketTitle').textContent = ticket.titulo || 'Ticket';
             document.getElementById('modalTicketId').textContent = 'ID: T-' + String(ticket.id || '').padStart(6, '0');
+            document.getElementById('modalTicketArea').textContent = 'Área: ' + (ticket.area || 'No especificada');
             document.getElementById('modalTicketUser').textContent = 'Usuario: ' + (ticket.usuario || '');
             document.getElementById('modalTicketDate').textContent = 'Fecha: ' + formatDate(ticket.fecha);
             document.getElementById('modalTicketTech').textContent = 'Técnico: ' + (ticket.agente || 'Sin asignar');
+            document.getElementById('modalTicketArea').textContent = ticket.area || 'No especificada';
             document.getElementById('modalTicketPriority').textContent = getPriorityText(ticket.prioridad);
             document.getElementById('modalTicketStatus').textContent = getStatusText(ticket.estado);
             document.getElementById('modalTicketDescription').textContent = ticket.descripcion || '';

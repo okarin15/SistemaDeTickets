@@ -1014,6 +1014,16 @@
                             </div>
                             
                             <div class="form-group">
+                                <label for="ticketArea">Área Afectada *</label>
+                                <select class="form-control" id="ticketArea" name="area" required>
+                                    <option value="" disabled selected>Selecciona el área...</option>
+                                    {% for value, display in areas %}
+                                        <option value="{{ value }}">{{ display }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
                                 <label for="ticketDescription">Descripción Detallada *</label>
                                 <textarea class="form-control" id="ticketDescription" name="descripcion" required placeholder="Describe el problema en detalle..." rows="5"></textarea>
                             </div>
