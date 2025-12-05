@@ -35,4 +35,8 @@ urlpatterns = [
     # --- ÁREAS (ESTAS SON LAS QUE FALTAN) ---
     path('guardar_area/', views.guardar_area, name='guardar_area'),
     path('area/eliminar/<int:area_id>/', views.eliminar_area, name='eliminar_area'),
+
+    # Agrega estas líneas en urlpatterns:
+    path('reportes/exportar/excel/', views.exportar_reporte_excel, name='exportar_excel'),
+    path('reportes/exportar/pdf/', views.exportar_reporte_pdf, name='exportar_pdf'),
 ]

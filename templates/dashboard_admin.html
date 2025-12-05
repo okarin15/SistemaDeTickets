@@ -602,10 +602,6 @@
             border-color: var(--primary);
         }
 
-        /* Ocultar filtro de prioridad (importancia)
-           (se sigue usando en JS pero no se muestra al usuario) */
-        #ticketPriorityFilter { display: none; }
-
         .chart-container {
             background-color: var(--dark-light);
             border-radius: var(--border-radius);
@@ -1392,6 +1388,55 @@
         font-size: 0.85rem;
         border-bottom: 1px solid #e2e8f0;
     }
+
+    /* === ESTILOS DE PAGINACIÓN MINIMALISTA === */
+    .pagination-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        background: var(--dark-light); /* Mismo fondo que la tabla */
+        border-top: 1px solid var(--border-color);
+        border-radius: 0 0 8px 8px;
+    }
+
+    .pagination-info {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+    .pagination-controls {
+        display: flex;
+        gap: 5px;
+    }
+
+    .page-btn {
+        padding: 5px 12px;
+        border: 1px solid var(--border-color);
+        background: transparent;
+        color: var(--text-light);
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+
+    .page-btn:hover:not(.disabled) {
+        background: rgba(16, 185, 129, 0.1);
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .page-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+
+    .page-btn.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
     </style>
 </head>
 <body data-theme="light">
@@ -1519,8 +1564,8 @@
                             <thead>
                                 <tr>
                                     <th>ID</th>
-                                    <th>Título</th>
-                                    <th>Área</th>
+                                    <th>TÍTULO</th>
+                                    <th>ÁREA</th>
                                     <th>Usuario</th>
                                     <th>Prioridad</th>
                                     <th>Estado</th>
@@ -1570,9 +1615,13 @@
                         </select>
                         <select class="filter-select" id="ticketPriorityFilter">
                             <option value="">Todas las prioridades</option>
+                            <option value="critical">Crítica</option>
                             <option value="high">Alta</option>
                             <option value="medium">Media</option>
                             <option value="low">Baja</option>
+                        </select>
+                        <select class="filter-select" id="ticketAreaFilter">
+                            <option value="">Todas las áreas</option>
                         </select>
                         <button class="btn btn-secondary" id="newTicketBtn">
                             <i class="fas fa-plus"></i> Nuevo Ticket
@@ -1598,6 +1647,7 @@
                                 <!-- Tickets se cargan aquí dinámicamente -->
                             </tbody>
                         </table>
+                        <div id="ticketsPagination" class="pagination-container"></div>
                     </div>
                 </div>
 
@@ -1619,6 +1669,7 @@
                             </thead>
                             <tbody id="areasBody"></tbody>
                         </table>
+                        <div id="areasPagination" class="pagination-container"></div>
                     </div>
                 </div>
 
@@ -1646,6 +1697,7 @@
                             <tbody id="categoriasBody">
                                 </tbody>
                         </table>
+                        <div id="categoriasPagination" class="pagination-container"></div>
                     </div>
                 </div>
 
@@ -1736,6 +1788,7 @@
                                     <!-- Los usuarios se cargarán aquí dinámicamente -->
                                 </tbody>
                             </table>
+                            <div id="usersPagination" class="pagination-container"></div>
                         </div>
 
                         <!-- Estado vacío -->
@@ -1753,27 +1806,46 @@
                 <!-- Página: Reportes - MEJORADA -->
                 <div id="reportes-page" class="page-content">
                     <div class="report-filters">
-                        <h3 style="margin: 0 0 15px 0; font-size: 1.1rem;">Generar Reportes</h3>
-                        <div class="filter-container">
-                            <select class="filter-select" id="reportType" style="flex: 1;">
-                                <option value="tickets">Reporte de Tickets</option>
-                                <option value="users">Reporte de Usuarios</option>
-                                <option value="performance">Reporte de Rendimiento</option>
+                        <h3 style="margin: 0 0 15px 0; font-size: 1.1rem;">Filtros de Reporte</h3>
+                        <div class="filter-container" style="gap: 10px; align-items: flex-end;">
+                            
+                            <div style="display:flex; gap:5px;">
+                                <input type="date" class="filter-select" id="startDate" title="Fecha Inicio">
+                                <input type="date" class="filter-select" id="endDate" title="Fecha Fin">
+                            </div>
+
+                            <select class="filter-select" id="reportCategoryFilter" style="min-width: 150px;">
+                                <option value="">Todas las Categorías</option>
+                                </select>
+
+                            <select class="filter-select" id="reportPriorityFilter" style="min-width: 140px;">
+                                <option value="">Todas las Prioridades</option>
+                                <option value="critical">Crítica</option>
+                                <option value="high">Alta</option>
+                                <option value="medium">Media</option>
+                                <option value="low">Baja</option>
                             </select>
-                            <input type="date" class="filter-select" id="startDate" placeholder="Fecha inicio" style="flex: 1;">
-                            <input type="date" class="filter-select" id="endDate" placeholder="Fecha fin" style="flex: 1;">
+                            
+                            <select class="filter-select" id="reportTechFilter" style="min-width: 150px;">
+                                <option value="">Todos los Técnicos</option>
+                                </select>
+
                             <div style="display: flex; gap: 10px;">
-                                <button class="btn btn-primary" id="generateReportBtn" onclick="generateReport()">
-                                    <i class="fas fa-chart-bar"></i> Generar
+                                <button class="btn btn-primary" onclick="generateReport()">
+                                    <i class="fas fa-filter"></i> Filtrar
                                 </button>
                                 
                                 <button class="btn btn-success" onclick="exportToExcel()" style="background: #10b981; color: white;">
                                     <i class="fas fa-file-excel"></i> Excel
                                 </button>
+
+                                <button class="btn btn-danger" onclick="exportToPDF()" style="background: #ef4444; color: white; display: inline-flex; align-items: center;">
+                                    <i class="fas fa-file-pdf" style="margin-right: 5px;"></i> PDF
+                                </button>
                             </div>
                         </div>
                     </div>
-
+                    
                     <!-- Gráficos en grid optimizado -->
                     <div class="charts-grid">
                         <div class="chart-card">
@@ -2094,8 +2166,94 @@
         // Variables de trabajo
         let currentUsers = [...masterUsers];
         let currentTickets = [...masterTickets];
+        let currentReportTickets = [...masterTickets]; // Datos filtrados para reportes/Excel
         let currentTheme = 'light';
         let charts = {};
+
+        // ===== CONFIGURACIÓN DE PAGINACIÓN =====
+        const ITEMS_PER_PAGE = 10; // El gerente quiere ver de 10 en 10
+        let currentPage = {
+            tickets: 1,
+            users: 1,
+            areas: 1,
+            categorias: 1
+        };
+
+        // Función Genérica para Paginar Datos
+        function paginateData(data, page) {
+            const start = (page - 1) * ITEMS_PER_PAGE;
+            const end = start + ITEMS_PER_PAGE;
+            return data.slice(start, end);
+        }
+
+        // Función Genérica para Dibujar Controles
+        function renderPaginationControls(totalItems, page, containerId, type) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+            
+            // Si no hay páginas, limpiar
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                container.style.display = 'none'; // Ocultar si es poco
+                return;
+            }
+            container.style.display = 'flex';
+
+            let buttonsHtml = '';
+            
+            // Botón Anterior
+            buttonsHtml += `<button class="page-btn ${page === 1 ? 'disabled' : ''}" onclick="changePage('${type}', ${page - 1})">Anterior</button>`;
+
+            // Números (Lógica simplificada: Muestra todos o limitar si son muchos)
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= page - 1 && i <= page + 1)) {
+                     buttonsHtml += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="changePage('${type}', ${i})">${i}</button>`;
+                } else if (i === page - 2 || i === page + 2) {
+                    buttonsHtml += `<span style="margin:0 5px;">...</span>`;
+                }
+            }
+
+            // Botón Siguiente
+            buttonsHtml += `<button class="page-btn ${page === totalPages ? 'disabled' : ''}" onclick="changePage('${type}', ${page + 1})">Siguiente</button>`;
+
+            const startInfo = (page - 1) * ITEMS_PER_PAGE + 1;
+            const endInfo = Math.min(page * ITEMS_PER_PAGE, totalItems);
+
+            container.innerHTML = `
+                <div class="pagination-info">Mostrando ${startInfo}-${endInfo} de ${totalItems} registros</div>
+                <div class="pagination-controls">${buttonsHtml}</div>
+            `;
+        }
+
+        // Función para cambiar de página
+        function changePage(type, newPage) {
+            const totalItems = getTypeTotal(type); // Necesitamos saber el total para validar
+            const maxPage = Math.ceil(totalItems / ITEMS_PER_PAGE);
+            
+            if (newPage < 1 || newPage > maxPage) return;
+            
+            currentPage[type] = newPage;
+            
+            // Recargar la tabla correspondiente
+            if (type === 'tickets') updateTicketsTable();
+            if (type === 'users') { 
+                // Para usuarios es especial porque tienes filtrado
+                displayUsers(currentUsers); 
+            }
+            if (type === 'areas') loadAreasData();
+            if (type === 'categorias') loadCategoriesData();
+        }
+
+        // Auxiliar para obtener total según tipo
+        function getTypeTotal(type) {
+            if (type === 'tickets') return currentTickets.length;
+            if (type === 'users') return currentUsers.length;
+            if (type === 'areas') return masterAreas.length;
+            if (type === 'categorias') return masterCategories.length;
+            return 0;
+        }
 
         // Inicialización cuando el DOM esté listo
         document.addEventListener('DOMContentLoaded', function() {
@@ -2134,6 +2292,25 @@
             if (typeof loadUsersData === 'function') loadUsersData();
             if (typeof loadTicketsData === 'function') loadTicketsData();
             if (typeof updateDashboardStats === 'function') updateDashboardStats();
+            populateAreaFilter();
+        }
+
+        // Llena el selector de áreas para filtrar tickets
+        function populateAreaFilter() {
+            const select = document.getElementById('ticketAreaFilter');
+            if (!select) return;
+
+            // Reset con la opción por defecto
+            select.innerHTML = '<option value="">Todas las áreas</option>';
+
+            if (masterAreas && masterAreas.length > 0) {
+                masterAreas.forEach(area => {
+                    const option = document.createElement('option');
+                    option.value = area.nombre;
+                    option.textContent = area.nombre;
+                    select.appendChild(option);
+                });
+            }
         }
 
                     const statusFilter = document.getElementById('filterStatus');
@@ -2174,6 +2351,11 @@
             const ticketPriorityFilter = document.getElementById('ticketPriorityFilter');
             if (ticketPriorityFilter) {
                 ticketPriorityFilter.addEventListener('change', applyTicketFilters);
+            }
+            
+            const ticketAreaFilter = document.getElementById('ticketAreaFilter');
+            if (ticketAreaFilter) {
+                ticketAreaFilter.addEventListener('change', applyTicketFilters);
             }
 
             // ==========================================
@@ -2481,6 +2663,7 @@
                     // 2. Inicializar y luego llenar datos
                     setTimeout(() => {
                         initializeReportCharts(); 
+                        populateReportFilters();
                         
                         // Esperamos un poco a que se creen los gráficos y llenamos los datos
                         setTimeout(() => {
@@ -2501,8 +2684,23 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
+            const totalCategorias = masterCategories ? masterCategories.length : 0;
+            const totalPages = Math.ceil(totalCategorias / ITEMS_PER_PAGE);
+            if (totalPages > 0 && currentPage.categorias > totalPages) {
+                currentPage.categorias = totalPages;
+            } else if (totalCategorias === 0) {
+                currentPage.categorias = 1;
+            }
+
             // Usamos masterCategories (que viene de la BD)
-            masterCategories.forEach(cat => {
+            if (!masterCategories || masterCategories.length === 0) {
+                renderPaginationControls(totalCategorias, currentPage.categorias, 'categoriasPagination', 'categorias');
+                return;
+            }
+
+            const pageData = paginateData(masterCategories, currentPage.categorias);
+
+            pageData.forEach(cat => {
                 const row = document.createElement('tr');
                 const estadoClass = cat.activo ? 'active' : 'inactive';
                 const estadoText = cat.activo ? 'Activa' : 'Inactiva';
@@ -2524,6 +2722,8 @@
                 `;
                 tbody.appendChild(row);
             });
+
+            renderPaginationControls(masterCategories.length, currentPage.categorias, 'categoriasPagination', 'categorias');
         }
 
         function toggleMobileMenu() {
@@ -2564,16 +2764,27 @@
             
             usersBody.innerHTML = '';
 
-            if (users.length === 0) {
+            const totalUsers = users.length;
+            const totalPages = Math.ceil(totalUsers / ITEMS_PER_PAGE);
+            if (totalPages > 0 && currentPage.users > totalPages) {
+                currentPage.users = totalPages;
+            } else if (totalUsers === 0) {
+                currentPage.users = 1;
+            }
+
+            if (totalUsers === 0) {
                 document.querySelector('#usersTable table').style.display = 'none';
                 emptyState.style.display = 'block';
+                renderPaginationControls(users.length, currentPage.users, 'usersPagination', 'users');
                 return;
             }
 
             document.querySelector('#usersTable table').style.display = 'table';
             emptyState.style.display = 'none';
 
-            users.forEach(user => {
+            const pageData = paginateData(users, currentPage.users);
+
+            pageData.forEach(user => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td><strong>U-${user.id.toString().padStart(4, '0')}</strong></td>
@@ -2613,6 +2824,8 @@
                 `;
                 usersBody.appendChild(row);
             });
+
+            renderPaginationControls(users.length, currentPage.users, 'usersPagination', 'users');
         }
 
         function updateUserStats(users) {
@@ -2719,31 +2932,39 @@
             
             tbody.innerHTML = '';
             
-            currentTickets.forEach(ticket => {
+            const totalTickets = currentTickets.length;
+            const totalPages = Math.ceil(totalTickets / ITEMS_PER_PAGE);
+            if (totalPages > 0 && currentPage.tickets > totalPages) {
+                currentPage.tickets = totalPages;
+            } else if (totalTickets === 0) {
+                currentPage.tickets = 1;
+            }
+
+            const pageData = paginateData(currentTickets, currentPage.tickets);
+
+            pageData.forEach(ticket => {
                 const row = document.createElement('tr');
 
-                // --- LÓGICA SLA MEJORADA (PARA EL PROFESOR) ---
+                // --- LÓGICA SLA (Contador restante) ---
                 let slaIcon = '';
                 let slaTexto = '';
                 
-                // Definimos el texto explicativo (El "Tooltip")
-                const infoSLA = `Prioridad: ${getPriorityText(ticket.prioridad)}\nLímite: ${ticket.horas_limite}h\nTranscurrido: ${ticket.horas}h`;
+                // Calculamos tiempo restante real
+                const horasRestantes = ticket.horas_limite - ticket.horas;
+                
+                const infoSLA = `Prioridad: ${getPriorityText(ticket.prioridad)}\nLímite: ${ticket.horas_limite}h`;
 
                 if (ticket.sla === 'overdue') {
-                    // Vencido: Fuego + Texto de cuánto se pasó
-                    slaIcon = `<i class="fas fa-fire" style="color: #ef4444; cursor: help;" title="${infoSLA} (VENCIDO)"></i>`;
-                    slaTexto = `<small style="color: #ef4444; font-size: 0.7rem; display: block;">+${(ticket.horas - ticket.horas_limite).toFixed(1)}h</small>`;
+                    slaIcon = `<i class="fas fa-fire" style="color: #ef4444;" title="VENCIDO hace ${Math.abs(horasRestantes).toFixed(1)}h"></i>`;
+                    slaTexto = `<span style="color: #ef4444; font-weight:bold;">+${Math.abs(horasRestantes).toFixed(1)}h</span>`;
                 } else if (ticket.sla === 'warning') {
-                    // Riesgo: Alerta
-                    slaIcon = `<i class="fas fa-exclamation-triangle" style="color: #f59e0b; cursor: help;" title="${infoSLA} (POR VENCER)"></i>`;
-                    slaTexto = `<small style="color: #f59e0b; font-size: 0.7rem; display: block;">Quedan ${(ticket.horas_limite - ticket.horas).toFixed(1)}h</small>`;
+                    slaIcon = `<i class="fas fa-exclamation-triangle" style="color: #f59e0b;" title="Por vencer"></i>`;
+                    slaTexto = `<span style="color: #f59e0b; font-weight:bold;">Quedan ${horasRestantes.toFixed(1)}h</span>`;
                 } else {
-                    // A tiempo: Check
-                    slaIcon = `<i class="fas fa-check-circle" style="color: #10b981; cursor: help;" title="${infoSLA} (EN PLAZO)"></i>`;
-                    // Opcional: no mostrar texto si está bien para no ensuciar
-                    slaTexto = `<small style="color: #10b981; font-size: 0.7rem; display: block;">${ticket.horas}h / ${ticket.horas_limite}h</small>`; 
+                    slaIcon = `<i class="fas fa-check-circle" style="color: #10b981;" title="A tiempo"></i>`;
+                    slaTexto = `<span style="color: #10b981;">Quedan ${horasRestantes.toFixed(1)}h</span>`;
                 }
-                // ---------------------------------------------
+                // -----------------------------------------------
 
                 row.innerHTML = `
                     <td><strong>T-${ticket.id.toString().padStart(6, '0')}</strong></td>
@@ -2762,8 +2983,13 @@
                         <span class="status ${normalizeStatus(ticket.estado)}">
                             ${getStatusText(ticket.estado)}
                         </span>
-                        <div style="text-align: center; line-height: 1;">
-                            ${slaIcon} ${slaTexto}
+                        
+                        <div style="font-size: 1.2rem;">
+                            ${slaIcon}
+                        </div>
+                        
+                        <div style="margin-left: 5px;">
+                            ${slaTexto}
                         </div>
                     </td>
                     <td>${formatDate(ticket.fecha)}</td>
@@ -2776,6 +3002,8 @@
                 `;
                 tbody.appendChild(row);
             });
+
+            renderPaginationControls(currentTickets.length, currentPage.tickets, 'ticketsPagination', 'tickets');
         }
 
         function updateRecentTickets() {
@@ -2784,50 +3012,54 @@
             
             tbody.innerHTML = '';
             
-            const recentTickets = currentTickets.slice(0, 3);
+            // Tomamos los 5 más recientes
+            const recentTickets = currentTickets.slice(0, 5);
             
             recentTickets.forEach(ticket => {
                 const row = document.createElement('tr');
 
-                // --- COPIA ESTE BLOQUE QUE YA TIENES EN LA OTRA FUNCIÓN ---
+                // --- LÓGICA SLA (Copiada para que funcione aquí también) ---
                 let slaIcon = '';
                 let slaTexto = '';
                 
-                // Definimos el texto explicativo (El "Tooltip")
-                const infoSLA = `Prioridad: ${getPriorityText(ticket.prioridad)}\nLímite: ${ticket.horas_limite}h\nTranscurrido: ${ticket.horas}h`;
+                // Calculamos tiempo restante
+                const horasRestantes = ticket.horas_limite - ticket.horas;
+                const infoSLA = `Prioridad: ${getPriorityText(ticket.prioridad)}\nLímite: ${ticket.horas_limite}h`;
 
                 if (ticket.sla === 'overdue') {
-                    // Vencido: Fuego + Texto de cuánto se pasó
-                    slaIcon = `<i class="fas fa-fire" style="color: #ef4444; cursor: help;" title="${infoSLA} (VENCIDO)"></i>`;
-                    slaTexto = `<small style="color: #ef4444; font-size: 0.7rem; display: block;">+${(ticket.horas - ticket.horas_limite).toFixed(1)}h</small>`;
+                    slaIcon = `<i class="fas fa-fire" style="color: #ef4444;" title="VENCIDO hace ${Math.abs(horasRestantes).toFixed(1)}h"></i>`;
+                    slaTexto = `<span style="color: #ef4444; font-weight:bold;">+${Math.abs(horasRestantes).toFixed(1)}h</span>`;
                 } else if (ticket.sla === 'warning') {
-                    // Riesgo: Alerta
-                    slaIcon = `<i class="fas fa-exclamation-triangle" style="color: #f59e0b; cursor: help;" title="${infoSLA} (POR VENCER)"></i>`;
-                    slaTexto = `<small style="color: #f59e0b; font-size: 0.7rem; display: block;">Quedan ${(ticket.horas_limite - ticket.horas).toFixed(1)}h</small>`;
+                    slaIcon = `<i class="fas fa-exclamation-triangle" style="color: #f59e0b;" title="Por vencer"></i>`;
+                    slaTexto = `<span style="color: #f59e0b; font-weight:bold;">Quedan ${horasRestantes.toFixed(1)}h</span>`;
                 } else {
-                    // A tiempo: Check
-                    slaIcon = `<i class="fas fa-check-circle" style="color: #10b981; cursor: help;" title="${infoSLA} (EN PLAZO)"></i>`;
-                    slaTexto = `<small style="color: #10b981; font-size: 0.7rem; display: block;">${ticket.horas}h / ${ticket.horas_limite}h</small>`; 
+                    slaIcon = `<i class="fas fa-check-circle" style="color: #10b981;" title="A tiempo"></i>`;
+                    slaTexto = `<span style="color: #10b981;">Quedan ${horasRestantes.toFixed(1)}h</span>`;
                 }
-                // ----------------------------------------------------------
+                // ------------------------------------------------------------
 
                 row.innerHTML = `
                     <td><strong>T-${ticket.id.toString().padStart(6, '0')}</strong></td>
                     <td>${ticket.titulo}</td>
                     <td>${ticket.area || '-'}</td>
                     <td>${ticket.usuario}</td>
-                    <td><span class="priority ${ticket.prioridad}">${getPriorityText(ticket.prioridad)}</span></td>
+                    <td><span class="priority ${ticket.prioridad}" style="cursor: default;">${getPriorityText(ticket.prioridad)}</span></td>
+                    
                     <td style="display: flex; align-items: center; gap: 10px;">
-                        <span class="status ${normalizeStatus(ticket.estado)}" data-ticket-id="${ticket.id}">${getStatusText(ticket.estado)}</span>
-                        <div style="text-align: center; line-height: 1;">
+                        <span class="status ${normalizeStatus(ticket.estado)}">${getStatusText(ticket.estado)}</span>
+                        <div style="font-size: 1.2rem;">
                             ${slaIcon}
                         </div>
+                        <div style="margin-left: 5px; font-size: 0.85rem;">
+                            ${slaTexto}
+                        </div>
                     </td>
+                    
                     <td>${formatDate(ticket.fecha)}</td>
                     <td>${ticket.agente || '-'}</td>
                     <td class="action-buttons">
                         <button class="action-btn edit" onclick="editTicket(${ticket.id})" title="Editar ticket">
-                            <i class="fas fa-edit"></i> Editar
+                            <i class="fas fa-edit"></i> EDITAR
                         </button>
                     </td>
                 `;
@@ -2839,6 +3071,7 @@
             const searchTerm = document.getElementById('ticketSearch').value.toLowerCase();
             const statusFilter = document.getElementById('ticketStatusFilter').value;
             const priorityFilter = document.getElementById('ticketPriorityFilter').value;
+            const areaFilter = document.getElementById('ticketAreaFilter').value;
             
             const filteredTickets = masterTickets.filter(ticket => {
                 const matchesSearch = ticket.titulo.toLowerCase().includes(searchTerm) || 
@@ -2860,7 +3093,10 @@
 
                 const matchesPriority = !priorityFilter || normalizePriority(ticket.prioridad) === priorityFilter;
                 
-                return matchesSearch && matchesStatus && matchesPriority;
+                const ticketAreaName = ticket.area || "Sin Categoría";
+                const matchesArea = !areaFilter || ticketAreaName === areaFilter;
+                
+                return matchesSearch && matchesStatus && matchesPriority && matchesArea;
             });
             
             currentTickets = filteredTickets;
@@ -3316,36 +3552,92 @@ function handleTicketSubmit(e) {
 
         // ===== SISTEMA DE REPORTES =====
         
+    function populateReportFilters() {
+        // 1. Llenar Categorías
+        const catSelect = document.getElementById('reportCategoryFilter');
+        if (catSelect && masterCategories) {
+            catSelect.innerHTML = '<option value="">Todas las Categorías</option>';
+            masterCategories.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.nombre; // Filtramos por nombre
+                opt.textContent = c.nombre;
+                catSelect.appendChild(opt);
+            });
+        }
+
+        // 2. Llenar Técnicos (Usuarios con rol 'tech')
+        const techSelect = document.getElementById('reportTechFilter');
+        if (techSelect && masterUsers) {
+            techSelect.innerHTML = '<option value="">Todos los Técnicos</option>';
+            masterUsers.filter(u => u.rol === 'tech').forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.username; // Filtramos por username
+                opt.textContent = t.nombre || t.username;
+                techSelect.appendChild(opt);
+            });
+        }
+    }
+        
     // Aceptamos un parámetro 'silent' (por defecto es false)
-    function generateReport(silent = false) {
-        // CORRECCIÓN AQUÍ: Aseguramos .value
+        function generateReport(silent = false) {
         const reportTypeInput = document.getElementById('reportType');
         const reportType = reportTypeInput ? reportTypeInput.value : 'tickets';
-        
-        const startDate = document.getElementById('startDate').value;
-        const endDate = document.getElementById('endDate').value;
-        
+
+        // 1. OBTENER VALORES DE LOS FILTROS
+        const fStart = document.getElementById('startDate') ? document.getElementById('startDate').value : '';
+        const fEnd = document.getElementById('endDate') ? document.getElementById('endDate').value : '';
+        const fCat = document.getElementById('reportCategoryFilter') ? document.getElementById('reportCategoryFilter').value : '';
+        const fPrio = document.getElementById('reportPriorityFilter') ? document.getElementById('reportPriorityFilter').value : '';
+        const fTech = document.getElementById('reportTechFilter') ? document.getElementById('reportTechFilter').value : '';
+
         if (!silent) {
-            showNotification(`Generando reporte...`, 'info');
+            showNotification(`Generando reporte filtrado...`, 'info');
         }
-        
+
         setTimeout(() => {
             const tbody = document.getElementById('reportTableBody');
             if (!tbody) return;
             
             tbody.innerHTML = '';
             
-            // --- CÁLCULOS ---
-            const categoriasUnicas = [...new Set(masterTickets.map(t => t.categoria || "Sin Categoría"))];
+            // 2. APLICAR FILTROS A LOS DATOS
+            const sourceTickets = (masterTickets && masterTickets.length ? masterTickets : currentTickets) || [];
+            const filteredData = sourceTickets.filter(t => {
+                let pass = true;
+                
+                // Filtro Fecha (Si hay fechas seleccionadas)
+                if (fStart || fEnd) {
+                    const tDate = new Date(t.fecha);
+                    if (fStart && new Date(fStart) > tDate) pass = false;
+                    if (fEnd && new Date(fEnd) < tDate) pass = false;
+                }
+
+                // Filtro Categor?a
+                if (fCat && (t.categoria || "Sin Categor?a") !== fCat) pass = false;
+                
+                // Filtro Prioridad
+                if (fPrio && normalizePriority(t.prioridad) !== fPrio) pass = false;
+                
+                // Filtro T?cnico
+                if (fTech && (t.agente || "") !== fTech) pass = false;
+
+                return pass;
+            });
+
+            // Guardamos los datos filtrados para exportarlos
+            currentReportTickets = filteredData;
+
+            // 3. USAR 'filteredData' PARA LOS C?LCULOS (En vez de masterTickets)
+            const categoriasUnicas = [...new Set(filteredData.map(t => t.categoria || "Sin Categor?a"))];
             let totalGlobal = 0;
             let resueltosGlobal = 0;
 
             categoriasUnicas.forEach(catName => {
-                const ticketsDeCategoria = masterTickets.filter(t => (t.categoria || "Sin Categoría") === catName);
+                const ticketsDeCategoria = filteredData.filter(t => (t.categoria || "Sin Categor?a") === catName);
                 const total = ticketsDeCategoria.length;
                 const resueltos = ticketsDeCategoria.filter(t => t.estado === 'resolved' || t.estado === 'completed' || t.estado === 'closed' || t.estado === 'cerrado' || t.estado === 'resuelto').length;
                 
-                // Cálculo de tiempo promedio
+                // C?lculo de tiempo promedio
                 let sumaHoras = 0;
                 let countConTiempo = 0;
                 ticketsDeCategoria.forEach(t => {
@@ -3356,7 +3648,7 @@ function handleTicketSubmit(e) {
                 });
                 const tiempo = countConTiempo > 0 ? (sumaHoras / countConTiempo).toFixed(1) + 'h' : '-';
 
-                // Cálculo de satisfacción
+                // C?lculo de satisfacci?n
                 let sumaEstrellas = 0;
                 let countVotos = 0;
                 ticketsDeCategoria.forEach(t => {
@@ -3410,11 +3702,10 @@ function handleTicketSubmit(e) {
             `;
             tbody.appendChild(trTotal);
             
-            // ACTUALIZAR TÍTULO Y GRÁFICOS
+            // ACTUALIZAR T?TULO Y GR?FICOS
             document.getElementById('reportTableTitle').textContent = `Reporte de ${getReportTypeText(reportType)}`;
             
-            // Esta llamada es la que arregla los gráficos
-            updateChartsData(reportType); 
+            updateChartsData(reportType, filteredData); 
             
             if (!silent) {
                 showNotification('Reporte generado correctamente', 'success');
@@ -3431,10 +3722,61 @@ function handleTicketSubmit(e) {
             return texts[type] || type;
         }
 
-        function updateChartsData(reportType) {
+        function exportToExcel() {
+            const source = (currentReportTickets && currentReportTickets.length > 0) ? currentReportTickets : masterTickets;
+
+            if (!source || source.length === 0) {
+                showNotification("No hay datos para exportar", "error");
+                return;
+            }
+
+            const data = source.map(t => ({
+                ID: t.id || '',
+                Categoria: t.categoria || 'Sin Categoría',
+                Prioridad: normalizePriority(t.prioridad),
+                Estado: t.estado || '',
+                Agente: t.agente || '',
+                Fecha: t.fecha || '',
+                Horas: t.horas || ''
+            }));
+
+            downloadCSV(data, 'reporte_tickets.csv');
+            showNotification('Exportado a Excel (CSV)', 'success');
+        }
+
+    function exportToPDF() {
+        // 1. Leer los valores actuales de los filtros
+        const inicio = document.getElementById('startDate').value;
+        const fin = document.getElementById('endDate').value;
+        const categoria = document.getElementById('reportCategoryFilter').value;
+        const prioridad = document.getElementById('reportPriorityFilter').value;
+        const tecnico = document.getElementById('reportTechFilter').value;
+
+        // 2. Construir la URL con parámetros (Query String)
+        const params = new URLSearchParams();
+        
+        if (inicio) params.append('inicio', inicio);
+        if (fin) params.append('fin', fin);
+        
+        // Solo agregamos si no es el valor por defecto
+        if (categoria && categoria !== "Todas las Categorías") params.append('categoria', categoria);
+        if (prioridad && prioridad !== "Todas las Prioridades") params.append('prioridad', prioridad);
+        if (tecnico && tecnico !== "Todos los Técnicos") params.append('tecnico', tecnico);
+
+        // 3. Redirigir a la URL de Django con los filtros pegados
+        // Asegúrate de que la ruta base coincida con tu urls.py (/reportes/exportar/pdf/)
+        const urlFinal = `/reportes/exportar/pdf/?${params.toString()}`;
+        
+        showNotification("Generando PDF filtrado...", "info");
+        
+        // Navegar a la URL para iniciar la descarga
+        window.location.href = urlFinal;
+    }
+
+        function updateChartsData(reportType, data = null) {
             // Actualizar datos de gráficos según el tipo de reporte
             if (reportType === 'tickets') {
-                const source = masterTickets && masterTickets.length ? masterTickets : currentTickets;
+                const source = (data && data.length) ? data : (masterTickets && masterTickets.length ? masterTickets : currentTickets);
                 
                 const pendientes = source.filter(t => normalizeStatus(t.estado) === 'pending').length;
                 const enProgreso = source.filter(t => normalizeStatus(t.estado) === 'in-progress').length;
@@ -3736,43 +4078,6 @@ function handleTicketSubmit(e) {
             URL.revokeObjectURL(url);
         }
 
-    // Función para descargar el Excel real
-    function exportToExcel() {
-        if (!masterTickets || masterTickets.length === 0) {
-            showNotification("No hay datos para exportar", "error");
-            return;
-        }
-
-        // Encabezados con ; para Excel en español
-        let csvContent = "ID;Título;Categoría;Solicitante;Técnico;Estado;Prioridad;Fecha;Satisfacción (1-5)\n";
-
-        masterTickets.forEach(t => {
-            let titulo = (t.titulo || "").replace(/;/g, " "); // Limpiar ; del título
-            let cat = t.categoria || "-";
-            let user = t.usuario || "-";
-            let tech = t.agente || "Sin asignar";
-            let estado = getStatusText(t.estado);
-            let prio = getPriorityText(t.prioridad);
-            let fecha = formatDate(t.fecha);
-            let sat = t.calificacion ? t.calificacion : "-";
-
-            let row = `${t.id};${titulo};${cat};${user};${tech};${estado};${prio};${fecha};${sat}`;
-            csvContent += row + "\n";
-        });
-
-        // BOM para tildes
-        const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", `Reporte_Tickets_${new Date().toISOString().slice(0,10)}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        showNotification("Reporte Excel descargado correctamente", "success");
-    }
-
     function calculateLeaderboard() {
         // 1. Obtener solo los usuarios con rol 'tech'
         const tecnicos = masterUsers.filter(u => u.rol === 'tech' || u.rol === 'support');
@@ -3952,13 +4257,24 @@ function handleTicketSubmit(e) {
         
         tbody.innerHTML = '';
 
+        const totalAreas = masterAreas ? masterAreas.length : 0;
+        const totalPages = Math.ceil(totalAreas / ITEMS_PER_PAGE);
+        if (totalPages > 0 && currentPage.areas > totalPages) {
+            currentPage.areas = totalPages;
+        } else if (totalAreas === 0) {
+            currentPage.areas = 1;
+        }
+
         // Verificar si hay datos
         if (!masterAreas || masterAreas.length === 0) {
             tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:#94a3b8;">No hay áreas registradas. Crea la primera.</td></tr>';
+            renderPaginationControls(totalAreas, currentPage.areas, 'areasPagination', 'areas');
             return;
         }
 
-        masterAreas.forEach(a => {
+        const pageData = paginateData(masterAreas, currentPage.areas);
+
+        pageData.forEach(a => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><strong>${a.id}</strong></td>
@@ -3975,6 +4291,8 @@ function handleTicketSubmit(e) {
             `;
             tbody.appendChild(tr);
         });
+
+        renderPaginationControls(masterAreas.length, currentPage.areas, 'areasPagination', 'areas');
     }
 
     function openAreaModal(id = null) {

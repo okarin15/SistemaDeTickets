@@ -11,6 +11,18 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.utils import timezone
 from django.db.models import Count, Q
 
+# --- IMPORTS PARA EXPORTACIÓN ---
+from django.http import HttpResponse
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.utils import get_column_letter
+
+
 # Pega esta función auxiliar
 def registrar_historial(ticket, usuario, accion):
     HistorialTicket.objects.create(
@@ -916,6 +928,145 @@ def guardar_area(request):
     # Redirigir manteniendo la pestaña
     response = redirect('dashboard_admin')
     response['Location'] += '?tab=areas'
+    return response
+
+@login_required
+def exportar_reporte_excel(request):
+    # Seguridad: Solo personal autorizado
+    if not request.user.is_staff:
+        return redirect('dashboard_user')
+
+    # Crear el libro de trabajo
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Reporte de Tickets"
+
+    # --- ESTILOS ---
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="10b981", end_color="10b981", fill_type="solid") # Verde corporativo
+    center_align = Alignment(horizontal="center", vertical="center")
+
+    # --- ENCABEZADOS ---
+    headers = ["ID", "Título", "Categoría", "Área", "Solicitante", "Técnico", "Prioridad", "Estado", "Fecha Creación", "Satisfacción"]
+    ws.append(headers)
+
+    # Aplicar estilo a encabezados
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = center_align
+
+    # --- DATOS ---
+    tickets = Ticket.objects.all().order_by('-fecha_creacion')
+    for t in tickets:
+        # Traducir estado y prioridad
+        estado = t.get_estado_display()
+        prioridad = t.get_prioridad_display()
+        tecnico = t.asignado_a.username if t.asignado_a else "Sin asignar"
+        area = t.area.nombre if t.area else "-"
+        cat = t.categoria.nombre if t.categoria else "-"
+        sat = f"{t.calificacion} ★" if t.calificacion else "-"
+        fecha = t.fecha_creacion.strftime('%d/%m/%Y')
+
+        row = [
+            f"T-{t.id:04d}", t.titulo, cat, area, 
+            t.solicitante.username, tecnico, prioridad, estado, fecha, sat
+        ]
+        ws.append(row)
+
+    # Ajustar ancho de columnas automáticamente
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except: pass
+        adjusted_width = (max_length + 2)
+        ws.column_dimensions[column].width = adjusted_width
+
+    # Generar respuesta HTTP
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="Reporte_Tickets_Coyahue_{timezone.now().strftime("%Y-%m-%d")}.xlsx"'
+    wb.save(response)
+    return response
+
+@login_required
+def exportar_reporte_pdf(request):
+    if not request.user.is_staff:
+        return redirect('dashboard_user')
+
+    # 1. Obtener filtros de la URL (GET)
+    f_inicio = request.GET.get('inicio')
+    f_fin = request.GET.get('fin')
+    f_categoria = request.GET.get('categoria')
+    f_prioridad = request.GET.get('prioridad')
+    f_tecnico = request.GET.get('tecnico')
+
+    # 2. Filtrar la base de datos
+    tickets = Ticket.objects.all().order_by('-fecha_creacion')
+
+    if f_inicio:
+        tickets = tickets.filter(fecha_creacion__date__gte=f_inicio)
+    if f_fin:
+        tickets = tickets.filter(fecha_creacion__date__lte=f_fin)
+    
+    if f_categoria and f_categoria != "Todas las Categorías":
+        tickets = tickets.filter(categoria__nombre=f_categoria)
+    
+    if f_prioridad and f_prioridad != "Todas las Prioridades":
+        # Asegurarnos de mapear el valor del select al valor de la BD si es necesario
+        # Si el select envía 'high' y la BD usa 'high', estamos bien.
+        tickets = tickets.filter(prioridad=f_prioridad)
+
+    if f_tecnico and f_tecnico != "Todos los Técnicos":
+        tickets = tickets.filter(asignado_a__username=f_tecnico)
+
+    # 3. Generar el PDF (Código estándar de ReportLab)
+    response = HttpResponse(content_type='application/pdf')
+    filename = f'Reporte_Tickets_{timezone.now().strftime("%Y-%m-%d")}.pdf'
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    doc = SimpleDocTemplate(response, pagesize=landscape(letter))
+    elements = []
+    styles = getSampleStyleSheet()
+
+    # Título con filtros aplicados (Opcional, para que se vea pro)
+    titulo_texto = "Reporte de Tickets - Coyahue S.A."
+    if f_categoria: titulo_texto += f" ({f_categoria})"
+    
+    elements.append(Paragraph(titulo_texto, styles['Title']))
+    elements.append(Spacer(1, 20))
+
+    # Tabla
+    data = [['ID', 'Título', 'Categoría', 'Solicitante', 'Técnico', 'Estado', 'Fecha', 'Calif.']]
+    
+    for t in tickets:
+        titulo_corto = (t.titulo[:25] + '..') if len(t.titulo) > 25 else t.titulo
+        tecnico = t.asignado_a.username if t.asignado_a else "-"
+        sat = str(t.calificacion) if t.calificacion else "-"
+        
+        data.append([
+            f"T-{t.id:04d}", titulo_corto, t.categoria.nombre, 
+            t.solicitante.username, tecnico, t.get_estado_display(), 
+            t.fecha_creacion.strftime('%d/%m'), sat
+        ])
+
+    t = Table(data)
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#10b981')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+    ]))
+    
+    elements.append(t)
+    doc.build(elements)
     return response
 
 @login_required
