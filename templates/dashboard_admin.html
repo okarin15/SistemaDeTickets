@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -1706,29 +1706,6 @@
                     <!-- Contenido de gestión de usuarios (el código original) -->
                     <div id="messageContainer"></div>
 
-                    <!-- Estadísticas Rápidas -->
-                    <div class="cards-container">
-                        <div class="card" id="usersTotalCard">
-                            <h3>Total Usuarios</h3>
-                            <div class="value" id="totalUsuarios">0</div>
-                            <div class="trend positive">+3 este mes</div>
-                        </div>
-                        <div class="card" id="usersActiveCard">
-                            <h3>Usuarios Activos</h3>
-                            <div class="value" id="activosUsuarios">0</div>
-                            <div class="trend positive">+2 esta semana</div>
-                        </div>
-                        <div class="card" id="usersAgentsCard">
-                            <h3>Técnicos</h3> <div class="value" id="soporteUsuarios">0</div>
-                            <div class="trend positive">+1 este mes</div>
-                        </div>
-                        <div class="card" id="usersNewTodayCard">
-                            <h3>Usuarios Nuevos Hoy</h3>
-                            <div class="value" id="nuevosHoyUsuarios">0</div>
-                            <div class="trend positive">+1 hoy</div>
-                        </div>
-                    </div>
-
                     <!-- Acciones Rápidas -->
                     <div class="card" style="margin-bottom: 30px;">
                         <h3>Acciones de Usuario</h3>
@@ -1847,17 +1824,76 @@
                     </div>
                     
                     <!-- Gráficos en grid optimizado -->
-                    <div class="charts-grid">
-                        <div class="chart-card">
-                            <h3>Tickets por Estado</h3>
-                            <canvas id="statusChart" class="chart-small"></canvas>
+                    <div class="charts-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                        
+                        <div class="chart-card" style="background: white; padding: 25px; border-radius: 6px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);">
+                            <h3 style="margin-bottom: 20px; color: #334155; font-size: 1rem; font-weight: 700;">Distribución por Estado</h3>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.9rem;">
+                                    <span style="color:#64748b;">Pendientes</span>
+                                    <span style="font-weight:700; color:#0f172a;" id="barCountPending">0</span>
+                                </div>
+                                <div style="width:100%; background:#f1f5f9; height:8px; border-radius:4px; overflow:hidden;">
+                                    <div id="barWidthPending" style="width:0%; height:100%; background:#0ea5e9; transition: width 1s;"></div>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 15px;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.9rem;">
+                                    <span style="color:#64748b;">En Progreso</span>
+                                    <span style="font-weight:700; color:#0f172a;" id="barCountProgress">0</span>
+                                </div>
+                                <div style="width:100%; background:#f1f5f9; height:8px; border-radius:4px; overflow:hidden;">
+                                    <div id="barWidthProgress" style="width:0%; height:100%; background:#f59e0b; transition: width 1s;"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.9rem;">
+                                    <span style="color:#64748b;">Resueltos/Cerrados</span>
+                                    <span style="font-weight:700; color:#0f172a;" id="barCountResolved">0</span>
+                                </div>
+                                <div style="width:100%; background:#f1f5f9; height:8px; border-radius:4px; overflow:hidden;">
+                                    <div id="barWidthResolved" style="width:0%; height:100%; background:#10b981; transition: width 1s;"></div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="chart-card">
-                            <h3>Tickets por Prioridad</h3>
-                            <canvas id="priorityChart" class="chart-small"></canvas>
+
+                        <div class="chart-card" style="background: white; padding: 25px; border-radius: 6px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);">
+                            <h3 style="margin-bottom: 20px; color: #334155; font-size: 1rem; font-weight: 700;">Nivel de Prioridad</h3>
+
+                            <div style="margin-bottom: 15px;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.9rem;">
+                                    <span style="color:#64748b;">Alta / Crítica</span>
+                                    <span style="font-weight:700; color:#ef4444;" id="barCountHigh">0</span>
+                                </div>
+                                <div style="width:100%; background:#f1f5f9; height:8px; border-radius:4px; overflow:hidden;">
+                                    <div id="barWidthHigh" style="width:0%; height:100%; background:#ef4444; transition: width 1s;"></div>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 15px;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.9rem;">
+                                    <span style="color:#64748b;">Media</span>
+                                    <span style="font-weight:700; color:#0f172a;" id="barCountMedium">0</span>
+                                </div>
+                                <div style="width:100%; background:#f1f5f9; height:8px; border-radius:4px; overflow:hidden;">
+                                    <div id="barWidthMedium" style="width:0%; height:100%; background:#f59e0b; transition: width 1s;"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.9rem;">
+                                    <span style="color:#64748b;">Baja</span>
+                                    <span style="font-weight:700; color:#0f172a;" id="barCountLow">0</span>
+                                </div>
+                                <div style="width:100%; background:#f1f5f9; height:8px; border-radius:4px; overflow:hidden;">
+                                    <div id="barWidthLow" style="width:0%; height:100%; background:#10b981; transition: width 1s;"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-
                     <div class="table-container">
                         <div class="table-header" style="padding: 18px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
                             <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: var(--text-light);" id="reportTableTitle">Reporte de Actividad</h3>
@@ -2481,7 +2517,7 @@
                 cardCriticalDash.addEventListener('click', () => {
                     showPage('tickets');
                     // Filtramos por Alta/Crítica
-                    document.getElementById('ticketPriorityFilter').value = 'high'; 
+                    document.getElementById('ticketPriorityFilter').value = 'critical'; // <-- CAMBIO: 'high' por 'critical'
                     // Y que estén pendientes (porque los resueltos no son urgencia)
                     document.getElementById('ticketStatusFilter').value = 'pending';
                     applyTicketFilters();
@@ -2656,22 +2692,11 @@
                     loadFaqData();
                     break;
                 case 'reportes':
-                    // 1. Limpiar gráficos anteriores
-                    if (charts.status) { charts.status.destroy(); charts.status = null; }
-                    if (charts.priority) { charts.priority.destroy(); charts.priority = null; }
-                    
-                    // 2. Inicializar y luego llenar datos
+                    populateReportFilters();
+                    // Solo generamos el reporte (que llena las barras)
                     setTimeout(() => {
-                        initializeReportCharts(); 
-                        populateReportFilters();
-                        
-                        // Esperamos un poco a que se creen los gráficos y llenamos los datos
-                        setTimeout(() => {
-                            // Llamamos a generar reporte en modo SILENCIOSO (true)
-                            generateReport(true); 
-                        }, 300);
-                        
-                    }, 100);
+                        generateReport(true); 
+                    }, 200);
                     break;
                 case 'configuracion':
                     loadSettings();
@@ -3353,196 +3378,11 @@ function handleTicketSubmit(e) {
 
         // ===== SISTEMA DE GRÁFICOS  =====
 
-        function initializeReportCharts() {
-            console.log("Inicializando gráficos de reportes...");
-            
-            // Esperar un poco más para asegurar que el DOM esté listo
-            setTimeout(() => {
-                // Gráfico de estados
-                const statusCanvas = document.getElementById('statusChart');
-                if (statusCanvas) {
-                    // Limpiar canvas existente
-                    const parent = statusCanvas.parentElement;
-                    const newCanvas = document.createElement('canvas');
-                    newCanvas.id = 'statusChart';
-                    newCanvas.className = 'chart-small';
-                    newCanvas.width = 400;
-                    newCanvas.height = 180;
-                    parent.replaceChild(newCanvas, statusCanvas);
-                    
-                    const statusCtx = newCanvas.getContext('2d');
-                    
-                    // Obtener colores del tema actual
-                    const isDarkTheme = currentTheme === 'dark';
-                    const textColor = isDarkTheme ? '#f8fafc' : '#0f172a';
-                    
-                    // Destruir gráfico anterior si existe
-                    if (charts.status) {
-                        charts.status.destroy();
-                    }
-                    
-                    charts.status = new Chart(statusCtx, {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['Pendientes', 'En Progreso', 'Resueltos'],
-                            datasets: [{
-                                data: [0, 0, 0],
-                                backgroundColor: [
-                                    'rgba(245, 158, 11, 0.9)',
-                                    'rgba(59, 130, 246, 0.9)',
-                                    'rgba(16, 185, 129, 0.9)'
-                                ],
-                                borderColor: [
-                                    'rgb(245, 158, 11)',
-                                    'rgb(59, 130, 246)',
-                                    'rgb(16, 185, 129)'
-                                ],
-                                borderWidth: 2,
-                                hoverOffset: 15
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            layout: {
-                                padding: {
-                                    top: 10,
-                                    bottom: 10,
-                                    left: 10,
-                                    right: 10
-                                }
-                            },
-                            plugins: {
-                                legend: {
-                                    position: 'bottom',
-                                    labels: {
-                                        color: textColor,
-                                        font: {
-                                            size: 11,
-                                            family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
-                                        },
-                                        padding: 15,
-                                        usePointStyle: true
-                                    }
-                                },
-                                tooltip: {
-                                    backgroundColor: isDarkTheme ? 'rgba(30, 41, 59, 0.95)' : 'rgba(248, 250, 252, 0.95)',
-                                    titleColor: textColor,
-                                    bodyColor: textColor,
-                                    borderColor: 'var(--primary)',
-                                    borderWidth: 1,
-                                    padding: 12,
-                                    cornerRadius: 6
-                                }
-                            },
-                            cutout: '55%',
-                            animation: {
-                                animateScale: true,
-                                animateRotate: true,
-                                duration: 800,
-                                easing: 'easeOutQuart'
-                            }
-                        }
-                    });
-                }
-
-                // Gráfico de prioridades
-                const priorityCanvas = document.getElementById('priorityChart');
-                if (priorityCanvas) {
-                    // Limpiar canvas existente
-                    const parent = priorityCanvas.parentElement;
-                    const newCanvas = document.createElement('canvas');
-                    newCanvas.id = 'priorityChart';
-                    newCanvas.className = 'chart-small';
-                    newCanvas.width = 400;
-                    newCanvas.height = 180;
-                    parent.replaceChild(newCanvas, priorityCanvas);
-                    
-                    const priorityCtx = newCanvas.getContext('2d');
-                    
-                    // Obtener colores del tema actual
-                    const isDarkTheme = currentTheme === 'dark';
-                    const textColor = isDarkTheme ? '#f8fafc' : '#0f172a';
-                    
-                    // Destruir gráfico anterior si existe
-                    if (charts.priority) {
-                        charts.priority.destroy();
-                    }
-                    
-                    charts.priority = new Chart(priorityCtx, {
-                        type: 'pie',
-                        data: {
-                            labels: ['Alta', 'Media', 'Baja'],
-                            datasets: [{
-                                data: [0, 0, 0],
-                                backgroundColor: [
-                                    'rgba(239, 68, 68, 0.9)',
-                                    'rgba(245, 158, 11, 0.9)',
-                                    'rgba(16, 185, 129, 0.9)'
-                                ],
-                                borderColor: [
-                                    'rgb(239, 68, 68)',
-                                    'rgb(245, 158, 11)',
-                                    'rgb(16, 185, 129)'
-                                ],
-                                borderWidth: 2,
-                                hoverOffset: 15
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            layout: {
-                                padding: {
-                                    top: 10,
-                                    bottom: 10,
-                                    left: 10,
-                                    right: 10
-                                }
-                            },
-                            plugins: {
-                                legend: {
-                                    position: 'bottom',
-                                    labels: {
-                                        color: textColor,
-                                        font: {
-                                            size: 11,
-                                            family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
-                                        },
-                                        padding: 15,
-                                        usePointStyle: true
-                                    }
-                                },
-                                tooltip: {
-                                    backgroundColor: isDarkTheme ? 'rgba(30, 41, 59, 0.95)' : 'rgba(248, 250, 252, 0.95)',
-                                    titleColor: textColor,
-                                    bodyColor: textColor,
-                                    borderColor: 'var(--primary)',
-                                    borderWidth: 1,
-                                    padding: 12,
-                                    cornerRadius: 6
-                                }
-                            },
-                            animation: {
-                                animateScale: true,
-                                animateRotate: true,
-                                duration: 800,
-                                easing: 'easeOutQuart'
-                            }
-                        }
-                    });
-                }
-                
-                console.log("Gráficos inicializados correctamente");
-            }, 200);
-        }
-
         // ===== FUNCIÓN PARA REDIMENSIONAR GRÁFICOS AL CAMBIAR TAMAÑO DE VENTANA =====
         function handleResize() {
             if (document.getElementById('reportes-page').classList.contains('active')) {
                 // Re-inicializar gráficos cuando la ventana cambia de tamaño
                 setTimeout(() => {
-                    initializeReportCharts();
                 }, 250);
             }
         }
@@ -3775,46 +3615,38 @@ function handleTicketSubmit(e) {
 
         function updateChartsData(reportType, data = null) {
             // Actualizar datos de gráficos según el tipo de reporte
-            if (reportType === 'tickets') {
-                const source = (data && data.length) ? data : (masterTickets && masterTickets.length ? masterTickets : currentTickets);
-                
-                const pendientes = source.filter(t => normalizeStatus(t.estado) === 'pending').length;
-                const enProgreso = source.filter(t => normalizeStatus(t.estado) === 'in-progress').length;
-                const resueltos = source.filter(t => normalizeStatus(t.estado) === 'completed').length;
-                
-                const alta = source.filter(t => normalizePriority(t.prioridad) === 'high').length;
-                const media = source.filter(t => normalizePriority(t.prioridad) === 'medium').length;
-                const baja = source.filter(t => normalizePriority(t.prioridad) === 'low').length;
-                
-                if (charts.status) {
-                    charts.status.data.datasets[0].data = [pendientes, enProgreso, resueltos];
-                    charts.status.update();
-                }
-                if (charts.priority) {
-                    charts.priority.data.datasets[0].data = [alta, media, baja];
-                    charts.priority.update();
-                }
-            } else if (reportType === 'users') {
-                // Datos para reporte de usuarios
-                if (charts.status) {
-                    charts.status.data.datasets[0].data = [15, 10, 110];
-                    charts.status.update();
-                }
-                if (charts.priority) {
-                    charts.priority.data.datasets[0].data = [12, 35, 88];
-                    charts.priority.update();
-                }
-            } else if (reportType === 'performance') {
-                // Datos para reporte de rendimiento
-                if (charts.status) {
-                    charts.status.data.datasets[0].data = [18, 12, 95];
-                    charts.status.update();
-                }
-                if (charts.priority) {
-                    charts.priority.data.datasets[0].data = [22, 38, 65];
-                    charts.priority.update();
-                }
-            }
+            // Usar datos filtrados o todos
+            const source = (data && data.length) ? data : (masterTickets && masterTickets.length ? masterTickets : currentTickets);
+            const total = source.length || 1; // Evitar división por cero
+
+            // --- 1. ACTUALIZAR BARRAS DE ESTADO ---
+            const p = source.filter(t => normalizeStatus(t.estado) === 'pending').length;
+            const i = source.filter(t => normalizeStatus(t.estado) === 'in-progress').length;
+            const r = source.filter(t => normalizeStatus(t.estado) === 'completed' || normalizeStatus(t.estado) === 'closed').length;
+
+            document.getElementById('barCountPending').textContent = p;
+            document.getElementById('barWidthPending').style.width = Math.round((p / total) * 100) + '%';
+
+            document.getElementById('barCountProgress').textContent = i;
+            document.getElementById('barWidthProgress').style.width = Math.round((i / total) * 100) + '%';
+
+            document.getElementById('barCountResolved').textContent = r;
+            document.getElementById('barWidthResolved').style.width = Math.round((r / total) * 100) + '%';
+
+
+            // --- 2. ACTUALIZAR BARRAS DE PRIORIDAD ---
+            const h = source.filter(t => normalizePriority(t.prioridad) === 'high' || normalizePriority(t.prioridad) === 'critical').length;
+            const m = source.filter(t => normalizePriority(t.prioridad) === 'medium').length;
+            const l = source.filter(t => normalizePriority(t.prioridad) === 'low').length;
+
+            document.getElementById('barCountHigh').textContent = h;
+            document.getElementById('barWidthHigh').style.width = Math.round((h / total) * 100) + '%';
+
+            document.getElementById('barCountMedium').textContent = m;
+            document.getElementById('barWidthMedium').style.width = Math.round((m / total) * 100) + '%';
+
+            document.getElementById('barCountLow').textContent = l;
+            document.getElementById('barWidthLow').style.width = Math.round((l / total) * 100) + '%';
         }
 
         // ===== SISTEMA DE CONFIGURACIÓN =====
