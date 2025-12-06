@@ -583,14 +583,12 @@ def dashboard_tecnico(request):
     if not es_tecnico:
         messages.error(request, 'No tienes permisos de técnico.')
         return redirect('dashboard_user')
-
-    # 1. FILTRO DE PRIVACIDAD
-    # Antes: all_tickets = Ticket.objects.select_related(...).all()...
-    # Ahora: Filtramos por (Sin Asignar) O (Asignado a Mí)
-    all_tickets = Ticket.objects.select_related('solicitante', 'asignado_a', 'categoria').filter(
-        Q(asignado_a__isnull=True) | Q(asignado_a=request.user)
-    ).order_by('-fecha_creacion')
     
+    # --- CAMBIO AQUÍ: ELIMINAMOS EL FILTRO DE PRIVACIDAD ---
+    # Antes: .filter(Q(asignado_a__isnull=True) | Q(asignado_a=request.user))
+    # Ahora: Traemos TODOS los tickets para que puedan cubrirse entre compañeros
+    all_tickets = Ticket.objects.select_related('solicitante', 'asignado_a', 'categoria').all().order_by('-fecha_creacion')
+
     # 2. Serializar datos
     tickets_data = []
     for t in all_tickets:
@@ -653,13 +651,20 @@ def dashboard_tecnico(request):
 @login_required
 def tomar_ticket(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
+    
+    # Guardamos quién lo tenía antes para el historial
+    antiguo_tecnico = ticket.asignado_a.username if ticket.asignado_a else "Nadie"
+    
     # Asignar al usuario actual
     ticket.asignado_a = request.user
-    registrar_historial(ticket, request.user, f"Ticket asignado a {request.user.username}") # <--- AGREGAR
     ticket.estado = 'in-progress' # Lo ponemos en progreso automáticamente
     ticket.save()
-    messages.success(request, f'Ticket T-{ticket.id:04d} asignado a ti correctamente.')
-    return redirect('dashboard_tecnico')
+    
+    # Historial claro
+    registrar_historial(ticket, request.user, f"Tomó el ticket (Reasignado de: {antiguo_tecnico})")
+    
+    messages.success(request, f'Ticket T-{ticket.id:04d} ahora está asignado a ti.')
+    return redirect(reverse('dashboard_tecnico') + '?tab=mis-tickets')
 
 @login_required
 def cambiar_estado_ticket(request, ticket_id):
@@ -673,10 +678,9 @@ def cambiar_estado_ticket(request, ticket_id):
     except:
         pass
 
-    if not (request.user.is_staff or (es_tecnico and ticket.asignado_a == request.user)):
+    if not (request.user.is_staff or es_tecnico):
         messages.error(request, 'No tienes permiso para modificar este ticket.')
         return redirect('dashboard_tecnico')
-
     estado_anterior = ticket.get_estado_display()
     
     # --- LÓGICA DE ESTADOS ---
@@ -866,6 +870,8 @@ def cambiar_prioridad_ticket(request, ticket_id):
     except:
         pass
 
+    # --- CAMBIO 1: PERMISOS ABIERTOS ---
+    # Antes verificábamos si el ticket era del usuario. Ahora solo si es staff o técnico.
     if not (request.user.is_staff or es_tecnico):
         messages.error(request, 'No tienes permiso.')
         return redirect('dashboard_admin')
@@ -889,13 +895,11 @@ def cambiar_prioridad_ticket(request, ticket_id):
         ticket.prioridad = 'medium'
         ticket.save()
 
-    # Redirección inteligente
+    # --- CAMBIO 2: REDIRECCIÓN CORRECTA ---
     if request.user.is_staff:
-        # Construimos la URL explícitamente
-        url = reverse('dashboard_admin') + '?tab=tickets'
-        return redirect(url)
+        return redirect(reverse('dashboard_admin') + '?tab=tickets')
     else:
-        return redirect('dashboard_tecnico')
+        return redirect(reverse('dashboard_tecnico') + '?tab=mis-tickets')
 
 @login_required
 @require_POST

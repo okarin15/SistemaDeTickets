@@ -340,6 +340,13 @@
             border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
+        /* Prioridad Crítica */
+        .priority.critical {
+            background-color: rgba(139, 92, 246, 0.2); /* Morado suave */
+            color: #7c3aed; /* Morado fuerte */
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
         .btn {
             padding: 10px 20px;
             border: none;
@@ -692,6 +699,57 @@
             font-family: inherit;
         }
     </style>
+    <style>
+        /* === PAGINACIÓN PROFESIONAL === */
+        .pagination-container {
+            padding: 15px 20px;
+            background: #ffffff;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .pagination-info {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .page-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            color: var(--text-muted);
+        }
+
+        .page-btn:hover:not(.disabled) {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        .page-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .page-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f9fafb;
+        }
+    </style>
 </head>
 <body>
     <button class="mobile-menu-btn" id="mobileMenuBtn">
@@ -796,6 +854,7 @@
                         <option value="high">Alta</option>
                         <option value="medium">Media</option>
                         <option value="low">Baja</option>
+                        <option value="critical">Crítica</option> 
                     </select>
                 </div>
 
@@ -818,6 +877,7 @@
                         </thead>
                         <tbody id="myTicketsTableBody"></tbody>
                     </table>
+                    <div id="myTicketsPagination" class="pagination-container"></div>
                 </div>
             </section>
 
@@ -837,6 +897,7 @@
                         <option value="high">Alta</option>
                         <option value="medium">Media</option>
                         <option value="low">Baja</option>
+                        <option value="critical">Crítica</option> 
                     </select>
                     <label class="checkbox-inline">
                         <input type="checkbox" id="onlyUnassigned">
@@ -864,6 +925,7 @@
                         </thead>
                         <tbody id="allTicketsTableBody"></tbody>
                     </table>
+                    <div id="allTicketsPagination" class="pagination-container"></div>
                 </div>
             </section>
 
@@ -952,6 +1014,13 @@
         let masterTickets = [];
         let myTickets = [];
         let allTicketsView = [];
+
+        // Configuración Paginación
+        const ITEMS_PER_PAGE = 10;
+        let currentPage = {
+            myTickets: 1,
+            allTickets: 1
+        };
 
         document.addEventListener('DOMContentLoaded', () => {
             setupEvents();
@@ -1160,7 +1229,10 @@
             const tbody = document.getElementById('myTicketsTableBody');
             tbody.innerHTML = '';
 
-            list.forEach(ticket => {
+            // PAGINAR
+            const pageData = paginateData(list, currentPage.myTickets);
+
+            pageData.forEach(ticket => {
                 // --- LÓGICA SLA MEJORADA (PARA EL PROFESOR) ---
                 let slaIcon = '';
                 let slaTexto = '';
@@ -1216,6 +1288,9 @@
                 `;
                 tbody.appendChild(tr);
             });
+            
+            // DIBUJAR CONTROLES
+            renderPaginationControls(list.length, currentPage.myTickets, 'myTicketsPagination', 'myTickets');
         }
 
         function applyAllTicketFilters() {
@@ -1244,7 +1319,10 @@
             const tbody = document.getElementById('allTicketsTableBody');
             tbody.innerHTML = '';
 
-            list.forEach(ticket => {
+            // PAGINAR
+            const pageData = paginateData(list, currentPage.allTickets);
+
+            pageData.forEach(ticket => {
                 // --- LÓGICA SLA MEJORADA (PARA EL PROFESOR) ---
                 let slaIcon = '';
                 let slaTexto = '';
@@ -1299,6 +1377,9 @@
                 `;
                 tbody.appendChild(tr);
             });
+
+            // DIBUJAR CONTROLES
+            renderPaginationControls(list.length, currentPage.allTickets, 'allTicketsPagination', 'allTickets');
         }
 
         function viewTicket(id) {
@@ -1477,23 +1558,27 @@
         }
 
         function normalizePriority(priority) {
-            if (!priority) return '';
+            if (!priority) return 'medium';
             const p = priority.toLowerCase();
-            switch (p) {
-                case 'alta': case 'high': return 'high';
-                case 'media': case 'medium': return 'medium';
-                case 'baja': case 'low': return 'low';
-                default: return p;
-            }
+            
+            if (p === 'alta' || p === 'high') return 'high';
+            if (p === 'media' || p === 'medium') return 'medium';
+            if (p === 'baja' || p === 'low') return 'low';
+            
+            if (p === 'critica' || p === 'critical') return 'critical'; 
+            
+            return 'medium';
         }
 
         function getPriorityText(priority) {
+            const norm = normalizePriority(priority);
             const map = {
                 'high': 'Alta',
                 'medium': 'Media',
-                'low': 'Baja'
+                'low': 'Baja',
+                'critical': 'Crítica' 
             };
-            return map[normalizePriority(priority)] || 'Sin datos';
+            return map[norm] || 'Sin datos';
         }
 
         function getStatusText(status) {
@@ -1531,6 +1616,59 @@
             n.className = 'notification ' + type;
             n.classList.add('show');
             setTimeout(() => n.classList.remove('show'), 3000);
+        }
+    </script>
+
+    <script>
+        // --- FUNCIONES PAGINACIÓN ---
+        function paginateData(data, page) {
+            const start = (page - 1) * ITEMS_PER_PAGE;
+            return data.slice(start, start + ITEMS_PER_PAGE);
+        }
+
+        function renderPaginationControls(totalItems, page, containerId, type) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+            
+            if (totalItems === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            container.style.display = 'flex';
+
+            let buttonsHtml = '';
+            
+            // Botón Anterior
+            buttonsHtml += `<button class="page-btn ${page === 1 ? 'disabled' : ''}" onclick="if(${page} > 1) changePage('${type}', ${page - 1})">Anterior</button>`;
+
+            // Números
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= page - 1 && i <= page + 1)) {
+                     buttonsHtml += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="changePage('${type}', ${i})">${i}</button>`;
+                } else if (i === page - 2 || i === page + 2) {
+                    buttonsHtml += `<span style="margin:0 5px; color:#999;">...</span>`;
+                }
+            }
+
+            // Botón Siguiente
+            buttonsHtml += `<button class="page-btn ${page === totalPages ? 'disabled' : ''}" onclick="if(${page} < ${totalPages}) changePage('${type}', ${page + 1})">Siguiente</button>`;
+
+            // Info de registros
+            const startInfo = (page - 1) * ITEMS_PER_PAGE + 1;
+            const endInfo = Math.min(page * ITEMS_PER_PAGE, totalItems);
+
+            container.innerHTML = `
+                <div class="pagination-info">Mostrando ${startInfo}-${endInfo} de ${totalItems} registros</div>
+                <div class="pagination-controls">${buttonsHtml}</div>
+            `;
+        }
+
+        function changePage(type, newPage) {
+            currentPage[type] = newPage;
+            if (type === 'myTickets') applyMyTicketFilters();
+            if (type === 'allTickets') applyAllTicketFilters();
         }
     </script>
 

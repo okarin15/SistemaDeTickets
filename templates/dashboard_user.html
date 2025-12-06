@@ -328,15 +328,15 @@
         }
 
         .status.nuevo {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
-            color: var(--secondary);
-            border-color: rgba(59, 130, 246, 0.3);
-        }
-
-        .status.en_progreso {
             background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.1) 100%);
             color: var(--warning);
             border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .status.en_progreso {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
+            color: var(--secondary);
+            border-color: rgba(59, 130, 246, 0.3);
         }
 
         .status.resuelto {
@@ -546,32 +546,30 @@
             color: var(--text-light);
         }
 
-        .pagination {
+        /* Paginación Enterprise */
+        .pagination-container {
+            padding: 15px 20px;
+            background: #ffffff;
+            border-top: 1px solid var(--border-color);
             display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 30px;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 0 0 12px 12px;
         }
-
         .page-btn {
-            padding: 10px 15px;
-            background: var(--dark-light);
+            padding: 6px 12px;
             border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
-            color: var(--text-light);
+            background: white;
             cursor: pointer;
-            transition: var(--transition);
+            border-radius: 6px;
+            margin: 0 2px;
         }
-
         .page-btn.active {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            background: var(--primary);
             color: white;
-        }
-
-        .page-btn:hover:not(.active) {
-            background: var(--dark);
             border-color: var(--primary);
         }
+        .page-btn.disabled { opacity: 0.5; cursor: not-allowed; }
 
         .modal {
             display: none;
@@ -855,7 +853,6 @@
                 <li><a href="#" onclick="showPage('crear-ticket')"><i class="fas fa-plus-circle"></i> Nuevo Ticket</a></li>
                 <li><a href="#" onclick="showPage('mis-tickets')" class="active"><i class="fas fa-ticket-alt"></i> Mis Tickets</a></li>
                 <li><a href="#" onclick="showPage('faq')"><i class="fas fa-question-circle"></i> Ayuda / FAQ</a></li>
-                <li><a href="#" onclick="showPage('configuracion')"><i class="fas fa-cog"></i> Configuración</a></li>
             </ul>
             <form method="post" action="{% url 'logout' %}" style="margin-top: auto;">
                 {% csrf_token %}
@@ -884,26 +881,25 @@
 
             <div id="pageContainer">
                 <div id="dashboard-page" class="page-content" style="display: none;">
-                    <div class="cards-container">
-                        <div class="card">
+<div class="cards-container">
+                        <div class="card" onclick="quickFilter('')" style="cursor: pointer;">
                             <h3>Total de Tickets</h3>
                             <div class="value" id="totalTickets">0</div>
-                            <div class="trend positive">+2 este mes</div>
                         </div>
-                        <div class="card">
+                        
+                        <div class="card" onclick="quickFilter('new')" style="cursor: pointer;">
                             <h3>Pendientes</h3>
                             <div class="value" id="pendientesTickets">0</div>
-                            <div class="trend negative">-1 esta semana</div>
                         </div>
-                        <div class="card">
+                        
+                        <div class="card" onclick="quickFilter('in-progress')" style="cursor: pointer;">
                             <h3>En Progreso</h3>
                             <div class="value" id="progresoTickets">0</div>
-                            <div class="trend positive">+1 esta semana</div>
                         </div>
-                        <div class="card">
+                        
+                        <div class="card" onclick="quickFilter('resolved')" style="cursor: pointer;">
                             <h3>Resueltos</h3>
                             <div class="value" id="resueltosTickets">0</div>
-                            <div class="trend positive">+3 este mes</div>
                         </div>
                     </div>
 
@@ -936,23 +932,18 @@
                 <div id="mis-tickets-page" class="page-content">
                     <div class="filters-container">
                         <div class="search-box">
-                            <input type="text" id="searchInput" placeholder="Buscar tickets por título o ID...">
+                            <input type="text" id="searchInput" placeholder="Buscar por título o ID...">
                             <i class="fas fa-search search-icon"></i>
                         </div>
+                        
                         <select class="filter-select" id="filterStatus">
                             <option value="">Todos los estados</option>
-                            <option value="nuevo">Nuevo</option>
-                            <option value="en_progreso">En Progreso</option>
-                            <option value="resuelto">Resuelto</option>
-                            <option value="cerrado">Cerrado</option>
+                            <option value="new">Nuevo</option>
+                            <option value="in-progress">En Progreso</option>
+                            <option value="resolved">Resuelto</option>
+                            <option value="closed">Cerrado</option>
                         </select>
-                        <select class="filter-select" id="filterPriority">
-                            <option value="">Todas las prioridades</option>
-                            <option value="baja">Baja</option>
-                            <option value="media">Media</option>
-                            <option value="alta">Alta</option>
-                            <option value="critica">Crítica</option>
-                        </select>
+                        
                         <button class="btn btn-primary" onclick="showPage('crear-ticket')">
                             <i class="fas fa-plus-circle"></i> Nuevo Ticket
                         </button>
@@ -982,6 +973,7 @@
                                 <tbody id="ticketsBody"></tbody>
                             </table>
                         </div>
+                        <div id="pagination" class="pagination-container"></div>
                         <div id="emptyState" class="empty-state" style="display: none;">
                             <i class="fas fa-inbox"></i>
                             <h3>No tienes tickets creados</h3>
@@ -991,7 +983,6 @@
                             </button>
                         </div>
                     </div>
-                    <div class="pagination" id="pagination"></div>
                 </div>
 
                 <div id="crear-ticket-page" class="page-content" style="display: none;">
@@ -1017,8 +1008,8 @@
                                 <label for="ticketArea">Área Afectada *</label>
                                 <select class="form-control" id="ticketArea" name="area" required>
                                     <option value="" disabled selected>Selecciona el área...</option>
-                                    {% for value, display in areas %}
-                                        <option value="{{ value }}">{{ display }}</option>
+                                    {% for area in areas %}
+                                        <option value="{{ area.id }}">{{ area.nombre }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -1043,32 +1034,6 @@
                                 </button>
                             </div>
                         </form>
-                    </div>
-                </div>
-
-                <div id="configuracion-page" class="page-content" style="display: none;">
-                    <div class="card">
-                        <h3 style="font-size: 1.3rem; margin-bottom: 25px; color: var(--text-light);">Configuración de Usuario</h3>
-                        <div class="form-group">
-                            <label>Nombre de Usuario</label>
-                            <input type="text" class="form-control" value="usuario123" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label>Email</label>
-                            <input type="email" class="form-control" value="usuario@empresa.com">
-                        </div>
-                        <div class="form-group">
-                            <label>Notificaciones por Email</label>
-                            <select class="form-control">
-                                <option value="si">Sí, recibir notificaciones</option>
-                                <option value="no">No recibir notificaciones</option>
-                            </select>
-                        </div>
-                        <div class="form-actions">
-                            <button class="btn btn-primary">
-                                <i class="fas fa-save"></i> Guardar Cambios
-                            </button>
-                        </div>
                     </div>
                 </div>
 
@@ -1113,7 +1078,7 @@
         let masterTickets = [];
         let currentTickets = [];
         let currentPage = 1;
-        const ticketsPerPage = 5;
+        const ITEMS_PER_PAGE = 5;
         let currentTicketId = null;
 
         // ===== INICIO APP =====
@@ -1183,8 +1148,7 @@
                 'dashboard': 'Mi Dashboard',
                 'faq': 'Preguntas Frecuentes',
                 'mis-tickets': 'Mis Tickets',
-                'crear-ticket': 'Crear Nuevo Ticket',
-                'configuracion': 'Configuración'
+                'crear-ticket': 'Crear Nuevo Ticket'
             };
             document.getElementById('pageTitle').textContent = titles[page] || 'Sistema de Tickets';
         }
@@ -1237,72 +1201,65 @@
         // ===== LISTADO DE TICKETS =====
         function loadTickets() {
             displayTickets(currentTickets);
-            updateStats(currentTickets);
-            setupPagination(currentTickets);
+            // La llamada a los contadores del dashboard se hace en el inicio
+            // y no aquí, para que los filtros no alteren los totales.
+            // La función updateStats() no existía, lo que causaba un error.
+            // Lo dejamos comentado por claridad.
+            // updateDashboardStats(); 
         }
 
         function displayTickets(tickets) {
             const ticketsBody = document.getElementById('ticketsBody');
             const emptyState = document.getElementById('emptyState');
+            const tableElement = document.querySelector('#ticketsTable table');
             if (!ticketsBody) return;
 
             ticketsBody.innerHTML = '';
 
             if (tickets.length === 0) {
-                if (document.querySelector('#ticketsTable table')) {
-                    document.querySelector('#ticketsTable table').style.display = 'none';
-                }
+                if (tableElement) tableElement.style.display = 'none';
                 if (emptyState) emptyState.style.display = 'block';
+                renderPaginationControls(0, currentPage);
                 return;
             }
 
-            if (document.querySelector('#ticketsTable table')) {
-                document.querySelector('#ticketsTable table').style.display = 'table';
-            }
+            if (tableElement) tableElement.style.display = 'table';
             if (emptyState) emptyState.style.display = 'none';
 
-            const startIndex = (currentPage - 1) * ticketsPerPage;
-            const endIndex = startIndex + ticketsPerPage;
-            const paginatedTickets = tickets.slice(startIndex, endIndex);
+            const totalPages = Math.max(1, Math.ceil(tickets.length / ITEMS_PER_PAGE));
+            if (currentPage > totalPages) currentPage = totalPages;
 
-            paginatedTickets.forEach(ticket => {
+            const pageData = paginateData(tickets, currentPage);
+
+            pageData.forEach(ticket => {
                 const row = document.createElement('tr');
 
-                let estadoDisplay = '';
-                switch(ticket.estado) {
-                    case 'en_progreso':
-                        estadoDisplay = 'PROGRESO';
-                        break;
-                    case 'nuevo':
-                        estadoDisplay = 'NUEVO';
-                        break;
-                    case 'resuelto':
-                        estadoDisplay = 'RESUELTO';
-                        break;
-                    case 'cerrado':
-                        estadoDisplay = 'CERRADO';
-                        break;
-                    default:
-                        estadoDisplay = String(ticket.estado || '').toUpperCase();
-                }
+                // --- AQUÍ OCURRE LA MAGIA ---
+                // Usamos las funciones traductoras
+                const textoEspanol = getStatusText(ticket.estado);
+                const claseCss = getStatusClass(ticket.estado);
 
                 row.innerHTML = `
                     <td><strong>T-${ticket.id.toString().padStart(4, '0')}</strong></td>
                     <td>${ticket.titulo}</td>
-                    <td><span class="status ${ticket.estado}">${estadoDisplay}</span></td>
+                    
+                    <td><span class="status ${claseCss}">${textoEspanol}</span></td>
+                    
                     <td>${formatDate(ticket.fecha_creacion)}</td>
                     <td>${formatDate(ticket.ultima_actualizacion)}</td>
                     <td class="action-buttons">
-                        <button class="action-btn detail" onclick="viewTicket(${ticket.id})" title="Ver historial y detalles">
+                        <button class="action-btn detail" onclick="viewTicket(${ticket.id})">
                             <i class="fas fa-eye"></i> Ver
                         </button>
-                        <button class="action-btn comment" onclick="openCommentModal(${ticket.id})" title="Agregar un comentario o respuesta">
+                        <button class="action-btn comment" onclick="openCommentModal(${ticket.id})">
                             <i class="fas fa-comment"></i> Comentar
                         </button>
                     </td>
                 `;
                 ticketsBody.appendChild(row);
             });
+
+            renderPaginationControls(tickets.length, currentPage);
         }
 
         function loadRecentTickets() {
@@ -1310,34 +1267,20 @@
             if (!recentTicketsBody) return;
 
             recentTicketsBody.innerHTML = '';
-
+            // Tomamos los 3 primeros
             const recentTickets = currentTickets.slice(0, 3);
 
             recentTickets.forEach(ticket => {
                 const row = document.createElement('tr');
 
-                let estadoDisplay = '';
-                switch(ticket.estado) {
-                    case 'en_progreso':
-                        estadoDisplay = 'PROGRESO';
-                        break;
-                    case 'nuevo':
-                        estadoDisplay = 'NUEVO';
-                        break;
-                    case 'resuelto':
-                        estadoDisplay = 'RESUELTO';
-                        break;
-                    case 'cerrado':
-                        estadoDisplay = 'CERRADO';
-                        break;
-                    default:
-                        estadoDisplay = String(ticket.estado || '').toUpperCase();
-                }
+                // --- USAMOS LAS MISMAS FUNCIONES DE TRADUCCIÓN ---
+                const textoEspanol = getStatusText(ticket.estado);
+                const claseCss = getStatusClass(ticket.estado);
 
                 row.innerHTML = `
                     <td><strong>T-${ticket.id.toString().padStart(4, '0')}</strong></td>
                     <td>${ticket.titulo}</td>
-                    <td><span class="status ${ticket.estado}">${estadoDisplay}</span></td>
+                    <td><span class="status ${claseCss}">${textoEspanol}</span></td>
                     <td>${formatDate(ticket.fecha_creacion)}</td>
                     <td class="action-buttons">
                         <button class="action-btn detail" onclick="viewTicket(${ticket.id})">
@@ -1349,53 +1292,64 @@
             });
         }
 
-        function updateStats(tickets) {
-            const total = tickets.length;
-            const pendientes = tickets.filter(t => t.estado === 'nuevo').length;
-            const progreso = tickets.filter(t => t.estado === 'en_progreso').length;
-            const resueltos = tickets.filter(t => t.estado === 'resuelto' || t.estado === 'cerrado').length;
-
-            const totalElement = document.getElementById('totalTickets');
-            const pendientesElement = document.getElementById('pendientesTickets');
-            const progresoElement = document.getElementById('progresoTickets');
-            const resueltosElement = document.getElementById('resueltosTickets');
-
-            if (totalElement) totalElement.textContent = total;
-            if (pendientesElement) pendientesElement.textContent = pendientes;
-            if (progresoElement) progresoElement.textContent = progreso;
-            if (resueltosElement) resueltosElement.textContent = resueltos;
-        }
-
         function updateDashboardStats() {
-            updateStats(masterTickets);
+            if (!masterTickets) return;
+            const total = masterTickets.length;
+            
+            // Usamos normalizeStatus para comparar de forma segura
+            const pendientes = masterTickets.filter(t => normalizeStatus(t.estado) === 'new').length;
+            const progreso = masterTickets.filter(t => normalizeStatus(t.estado) === 'in-progress').length;
+            
+            // Para 'Resueltos', sumamos 'resolved' Y 'closed'
+            const resueltos = masterTickets.filter(t => {
+                const s = normalizeStatus(t.estado);
+                return s === 'resolved' || s === 'closed';
+            }).length;
+
+            // Actualizamos los números
+            if(document.getElementById('totalTickets')) document.getElementById('totalTickets').textContent = total;
+            if(document.getElementById('pendientesTickets')) document.getElementById('pendientesTickets').textContent = pendientes;
+            if(document.getElementById('progresoTickets')) document.getElementById('progresoTickets').textContent = progreso;
+            if(document.getElementById('resueltosTickets')) document.getElementById('resueltosTickets').textContent = resueltos;
         }
 
         // ===== FILTROS =====
+        // Lógica de filtrado inteligente
         function applyFilters() {
             const searchInput = document.getElementById('searchInput');
             const filterStatus = document.getElementById('filterStatus');
-            const filterPriority = document.getElementById('filterPriority');
-
-            if (!searchInput || !filterStatus || !filterPriority) return;
+            
+            if (!searchInput || !filterStatus) return;
 
             const searchTerm = searchInput.value.toLowerCase();
-            const statusFilter = filterStatus.value;
-            const priorityFilter = filterPriority.value;
+            const statusFilter = filterStatus.value; // Este ya viene limpio del select ('new', 'in-progress', etc)
 
             const filteredTickets = masterTickets.filter(ticket => {
+                // 1. Filtro de Texto
                 const matchesSearch = ticket.titulo.toLowerCase().includes(searchTerm) || 
                                      `T-${ticket.id.toString().padStart(4, '0')}`.includes(searchTerm);
-                const matchesStatus = !statusFilter || ticket.estado === statusFilter;
-                const matchesPriority = !priorityFilter || ticket.prioridad === priorityFilter;
+                
+                // 2. Filtro de Estado (Usando normalización)
+                const tStatus = normalizeStatus(ticket.estado);
+                let matchesStatus = true;
 
-                return matchesSearch && matchesStatus && matchesPriority;
+                if (statusFilter) {
+                    if (statusFilter === 'resolved') {
+                        // Si el filtro es Resuelto, aceptamos Resolved O Closed
+                        matchesStatus = (tStatus === 'resolved' || tStatus === 'closed');
+                    } else {
+                        // Coincidencia exacta para el resto
+                        matchesStatus = tStatus === statusFilter;
+                    }
+                }
+
+                return matchesSearch && matchesStatus;
             });
 
             currentTickets = filteredTickets;
             currentPage = 1;
             loadTickets();
-            loadRecentTickets();
-            updateDashboardStats();
+            // NO llamamos a updateDashboardStats aquí para que los contadores de arriba se mantengan con los totales globales
         }
 
         function refreshTickets() {
@@ -1403,36 +1357,41 @@
             window.location.reload();
         }
 
-        function setupPagination(tickets) {
-            const pagination = document.getElementById('pagination');
-            if (!pagination) return;
-
-            pagination.innerHTML = '';
-            const totalPages = Math.ceil(tickets.length / ticketsPerPage);
-
-            if (totalPages <= 1) return;
-
-            for (let i = 1; i <= totalPages; i++) {
-                const pageBtn = document.createElement('button');
-                pageBtn.className = 'page-btn ' + (i === currentPage ? 'active' : '');
-                pageBtn.textContent = i;
-                pageBtn.addEventListener('click', () => {
-                    currentPage = i;
-                    displayTickets(tickets);
-                    updatePaginationButtons();
-                });
-                pagination.appendChild(pageBtn);
-            }
+        // ===== PAGINACION ENTERPRISE =====
+        function paginateData(data, page) {
+            const start = (page - 1) * ITEMS_PER_PAGE;
+            return data.slice(start, start + ITEMS_PER_PAGE);
         }
 
-        function updatePaginationButtons() {
-            const pagination = document.getElementById('pagination');
-            if (!pagination) return;
+        function renderPaginationControls(totalItems, page) {
+            const container = document.getElementById('pagination');
+            if (!container) return;
 
-            const buttons = pagination.getElementsByClassName('page-btn');
-            for (let i = 0; i < buttons.length; i++) {
-                buttons[i].classList.toggle('active', parseInt(buttons[i].textContent) === currentPage);
+            const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+            if (totalItems === 0) { container.style.display = 'none'; return; }
+            container.style.display = 'flex';
+
+            let html = '';
+            html += `<button class="page-btn ${page===1?'disabled':''}" onclick="if(${page}>1) changePage(${page-1})">Anterior</button>`;
+            
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button class="page-btn ${i===page?'active':''}" onclick="changePage(${i})">${i}</button>`;
             }
+            
+            html += `<button class="page-btn ${page===totalPages?'disabled':''}" onclick="if(${page}<${totalPages}) changePage(${page+1})">Siguiente</button>`;
+
+            const startInfo = (page - 1) * ITEMS_PER_PAGE + 1;
+            const endInfo = Math.min(page * ITEMS_PER_PAGE, totalItems);
+
+            container.innerHTML = `
+                <div class="pagination-info">Mostrando ${startInfo}-${endInfo} de ${totalItems} tickets</div>
+                <div class="pagination-controls">${html}</div>
+            `;
+        }
+
+        function changePage(newPage) {
+            currentPage = newPage;
+            displayTickets(currentTickets); 
         }
 
         // ===== COMENTARIOS / MODALES =====
@@ -1621,21 +1580,42 @@ function renderComments(ticket) {
         }
 
         function normalizeStatus(status) {
-            if (!status) return '';
-            const s = status.toLowerCase();
-            if (s === 'resuelto' || s === 'resolved' || s === 'completed') return 'resolved';
-            if (s === 'cerrado' || s === 'closed') return 'closed';
-            return s;
+            if (!status) return 'new'; // Por defecto new si viene vacío
+            
+            // 1. Limpiar el texto (quitar espacios y poner minúsculas)
+            const s = status.toString().toLowerCase().trim();
+            
+            // 2. Mapear todas las posibilidades
+            if (s === 'new' || s === 'nuevo' || s === 'pending' || s === 'pendiente') return 'new';
+            if (s === 'in-progress' || s === 'in progress' || s === 'en_progreso' || s === 'en progreso') return 'in-progress';
+            if (s === 'resolved' || s === 'resuelto' || s === 'completed' || s === 'completado') return 'resolved';
+            if (s === 'closed' || s === 'cerrado' || s === 'close') return 'closed';
+            
+            return s; // Si no coincide con nada, devuelve lo que llegó
         }
 
+        // Texto en Español
         function getStatusText(status) {
+            const s = normalizeStatus(status);
             const map = {
-                'nuevo': 'Nuevo',
-                'en_progreso': 'En Progreso',
-                'resuelto': 'Resuelto',
-                'cerrado': 'Cerrado'
+                'new': 'NUEVO',
+                'in-progress': 'EN PROGRESO',
+                'resolved': 'RESUELTO',
+                'closed': 'CERRADO'
             };
-            return map[status] || status;
+            return map[s] || status.toString().toUpperCase();
+        }
+
+        // Clase CSS (Color)
+        function getStatusClass(status) {
+            const s = normalizeStatus(status);
+            const map = {
+                'new': 'nuevo',          // CSS espera .nuevo
+                'in-progress': 'en_progreso', // CSS espera .en_progreso
+                'resolved': 'resuelto',  // CSS espera .resuelto
+                'closed': 'cerrado'      // CSS espera .cerrado
+            };
+            return map[s] || '';
         }
 
         function loadFaqData() {
@@ -1665,6 +1645,20 @@ function renderComments(ticket) {
             });
         }
 
+        // Función para los botones del Dashboard
+        function quickFilter(estado) {
+            // 1. Cambiar a la pestaña de lista
+            showPage('mis-tickets');
+            
+            // 2. Mover el select al estado deseado
+            const select = document.getElementById('filterStatus');
+            if(select) {
+                select.value = estado;
+            }
+            
+            // 3. Aplicar el filtro
+            applyFilters();
+        }
         // Función global para manejar el clic en las estrellas
         window.setRating = function(value) {
             // Guardar el valor en el input oculto

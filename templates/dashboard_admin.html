@@ -1653,30 +1653,21 @@
 
                 <!-- Página: Gestión de Áreas -->
                 <div id="areas-page" class="page-content">
-                    <div class="header-actions" style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-                        <h3>Gestión de Áreas</h3>
-                        <button class="btn btn-primary" onclick="openAreaModal()">+ Nueva Área</button>
+                    <div class="header-actions" style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+                        <button class="btn btn-primary" onclick="openAreaModal()">
+                            <i class="fas fa-plus"></i> Nueva Área
+                        </button>
                     </div>
                     <div class="table-container">
                         <table>
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Nombre</th>
-                                    <th>Descripción</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
                             <tbody id="areasBody"></tbody>
                         </table>
-                        <div id="areasPagination" class="pagination-container"></div>
                     </div>
                 </div>
 
 
                 <div id="categorias-page" class="page-content">
-                    <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        
+                    <div class="header-actions" style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
                         <button class="btn btn-primary" onclick="openCategoryModal()">
                             <i class="fas fa-plus"></i> Nueva Categoría
                         </button>
@@ -1684,20 +1675,9 @@
                 
                     <div class="table-container">
                         <table>
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Nombre</th>
-                                    <th>Descripción</th>
-                                    <th>Tickets Asociados</th>
-                                    <th>Estado</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
                             <tbody id="categoriasBody">
                                 </tbody>
                         </table>
-                        <div id="categoriasPagination" class="pagination-container"></div>
                     </div>
                 </div>
 
@@ -2854,6 +2834,7 @@
         }
 
         function updateUserStats(users) {
+            // Cálculos (estos no dan error)
             const total = users.length;
             const activos = users.filter(u => u.estado === 'active').length;
             const soporte = users.filter(u => u.rol === 'tech').length; 
@@ -2863,10 +2844,21 @@
                 return userDate === today;
             }).length;
 
-            document.getElementById('totalUsuarios').textContent = total;
-            document.getElementById('activosUsuarios').textContent = activos;
-            document.getElementById('soporteUsuarios').textContent = soporte;
-            document.getElementById('nuevosHoyUsuarios').textContent = nuevosHoy;
+            // --- AQUÍ ESTABA EL ERROR ---
+            // Antes intentaba escribir directo. Ahora preguntamos "if exists"
+            
+            if (document.getElementById('totalUsuarios')) {
+                document.getElementById('totalUsuarios').textContent = total;
+            }
+            if (document.getElementById('activosUsuarios')) {
+                document.getElementById('activosUsuarios').textContent = activos;
+            }
+            if (document.getElementById('soporteUsuarios')) {
+                document.getElementById('soporteUsuarios').textContent = soporte;
+            }
+            if (document.getElementById('nuevosHoyUsuarios')) {
+                document.getElementById('nuevosHoyUsuarios').textContent = nuevosHoy;
+            }
         }
 
         function applyUserFilters() {
@@ -3714,184 +3706,82 @@ function handleTicketSubmit(e) {
 
         function updateDashboardStats() {
             // ==========================================
-            // 1. CÁLCULOS DE CONTADORES BÁSICOS
+            // 1. CÁLCULOS BLINDADOS (NO EXPLOTAN CON DATOS VACÍOS)
             // ==========================================
+            if (!currentTickets) return; // Protección básica
+            
             const total = currentTickets.length;
             
-            // --- NUEVO CÁLCULO: CONTAR AGENTES DE SOPORTE ---
-            // Filtramos usuarios cuyo rol sea 'tech' o 'support' y estén activos
+            // Agentes: Filtramos y contamos
             const agentes = currentUsers.filter(u => 
                 (u.rol === 'tech' || u.rol === 'support') && u.estado === 'active'
             ).length;
 
+            // Filtros de estado (Usamos || '' para evitar error en toLowerCase)
+            const pendientes = currentTickets.filter(t => 
+                ['new', 'pending', 'nuevo', 'pendiente'].includes((t.estado || '').toLowerCase())
+            ).length;
+            
+            const resueltos = currentTickets.filter(t => 
+                ['resolved', 'completed', 'closed', 'cerrado', 'resuelto'].includes((t.estado || '').toLowerCase())
+            ).length;
 
-            // Filtros de estado (Normalizamos mayúsculas/minúsculas)
-            const pendientes = currentTickets.filter(t => ['new', 'pending', 'nuevo', 'pendiente'].includes(t.estado.toLowerCase())).length;
-            const resueltos = currentTickets.filter(t => ['resolved', 'completed', 'closed', 'cerrado', 'resuelto'].includes(t.estado.toLowerCase())).length;
-            const activos = currentUsers.filter(u => u.estado === 'active').length;
-
-            // Filtro de Críticos (Alta o Crítica y NO resueltos)
+            // --- AQUÍ ESTABA EL ERROR ---
+            // Antes: t.prioridad.toLowerCase() -> Si era null, explotaba.
+            // Ahora: (t.prioridad || '').toLowerCase() -> Si es null, usa texto vacío y sigue vivo.
             const criticos = currentTickets.filter(t => 
-                ['high', 'alta', 'critical', 'critica'].includes(t.prioridad.toLowerCase()) &&
-                !['resolved', 'completed', 'closed', 'cerrado', 'resuelto'].includes(t.estado.toLowerCase())
+                ['high', 'alta', 'critical', 'critica'].includes((t.prioridad || '').toLowerCase()) &&
+                !['resolved', 'completed', 'closed', 'cerrado', 'resuelto'].includes((t.estado || '').toLowerCase())
             ).length;
 
             // ==========================================
-            // 2. CÁLCULOS MATEMÁTICOS (TIEMPO Y ESTRELLAS)
+            // 2. ACTUALIZAR PANTALLA
             // ==========================================
+
+            // Tarjetas Superiores
+            if(document.getElementById('totalTicketsStat')) document.getElementById('totalTicketsStat').textContent = total;
+            if(document.getElementById('pendingTicketsStat')) document.getElementById('pendingTicketsStat').textContent = pendientes;
+            if(document.getElementById('resolvedTicketsStat')) document.getElementById('resolvedTicketsStat').textContent = resueltos;
+            if(document.getElementById('criticalTicketsStat')) document.getElementById('criticalTicketsStat').textContent = criticos;
+            
+            // Resumen Inferior (Agentes)
+            const agentValElement = document.getElementById('summaryAgentsVal');
+            if (agentValElement) agentValElement.textContent = agentes;
+
+            // --- CÁLCULOS DE EFICIENCIA ---
             let sumaHoras = 0;
             let ticketsConTiempo = 0;
             let sumaEstrellas = 0;
             let ticketsVotados = 0;
 
             currentTickets.forEach(t => {
-                // Tiempo Promedio (viene del backend en 't.horas')
                 if (t.horas && parseFloat(t.horas) > 0) {
                     sumaHoras += parseFloat(t.horas);
                     ticketsConTiempo++;
                 }
-                // Satisfacción Real (viene del backend en 't.calificacion')
                 if (t.calificacion && parseInt(t.calificacion) > 0) {
                     sumaEstrellas += parseInt(t.calificacion);
                     ticketsVotados++;
                 }
             });
 
-            // Promedio Horas
-            const promedioHoras = ticketsConTiempo > 0 ? (sumaHoras / ticketsConTiempo).toFixed(1) + 'h' : '0.0h';
-            
-            // Porcentaje Satisfacción
+            const promedioHoras = ticketsConTiempo > 0 ? (sumaHoras / ticketsConTiempo).toFixed(1) + 'h' : '-';
             let satisfaccionPorcentaje = 0;
             if (ticketsVotados > 0) {
-                // (Promedio de estrellas / 5) * 100
                 satisfaccionPorcentaje = Math.round((sumaEstrellas / ticketsVotados / 5) * 100);
             }
-            
-            // Tasa de Resolución
             const tasaResolucion = total > 0 ? Math.round((resueltos / total) * 100) : 0;
 
-
-            // ==========================================
-            // 3. ACTUALIZAR EL DOM (PANTALLA)
-            // ==========================================
-
-            // A) Tarjetas Superiores (Dashboard Principal)
-            if(document.getElementById('totalTicketsStat')) 
-                document.getElementById('totalTicketsStat').textContent = total;
+            // Actualizar Métricas KPI
+            if(document.getElementById('summaryResolution')) document.getElementById('summaryResolution').textContent = tasaResolucion + '%';
+            if(document.getElementById('summaryAvgTime')) document.getElementById('summaryAvgTime').textContent = promedioHoras;
+            if(document.getElementById('summarySatisfaction')) document.getElementById('summarySatisfaction').textContent = satisfaccionPorcentaje + '%';
             
-            if(document.getElementById('pendingTicketsStat')) 
-                document.getElementById('pendingTicketsStat').textContent = pendientes;
-            
-            if(document.getElementById('resolvedTicketsStat')) 
-                document.getElementById('resolvedTicketsStat').textContent = resueltos;
-            
-            // 1. Tarjeta Superior (Críticos)
-            if(document.getElementById('criticalTicketsStat')) {
-                // Aseguramos que se actualice el número
-                const criticos = currentTickets.filter(t => 
-                    ['high', 'alta', 'critical', 'critica'].includes(t.prioridad.toLowerCase()) &&
-                    !['resolved', 'completed', 'closed', 'cerrado', 'resuelto'].includes(t.estado.toLowerCase())
-                ).length;
-                document.getElementById('criticalTicketsStat').textContent = criticos;
-            }
-
-
-            
-            // B) Sección Resumen del Sistema (La que acabamos de cambiar HTML)
-            if(document.getElementById('summaryResolution')) 
-                document.getElementById('summaryResolution').textContent = tasaResolucion + '%';
-            
-            if(document.getElementById('summaryAvgTime')) 
-                document.getElementById('summaryAvgTime').textContent = promedioHoras;
-            
-            if(document.getElementById('summarySatisfaction')) 
-                document.getElementById('summarySatisfaction').textContent = satisfaccionPorcentaje + '%';
-            
-            // C) Pestaña "Gestionar Tickets" (Tarjetas internas)
-            if(document.getElementById('openTickets')) 
-                document.getElementById('openTickets').textContent = pendientes;
-                
-            if(document.getElementById('avgResponseTime')) 
-                document.getElementById('avgResponseTime').textContent = promedioHoras;
-                
-            if(document.getElementById('resolvedTicketsCardValue')) 
-                document.getElementById('resolvedTicketsCardValue').textContent = resueltos;
-                
-            if(document.getElementById('satisfactionRate')) 
-                document.getElementById('satisfactionRate').textContent = satisfaccionPorcentaje + '%';
-
-            // === EVENTOS DE CLIC PARA MÉTRICAS DE EFICIENCIA ===
-            
-            // 1. Tasa de Resolución -> Lleva a Reportes
-            const itemRes = document.getElementById('summaryResolution');
-            if(itemRes) {
-                itemRes.parentElement.style.cursor = 'pointer'; // Asegurar cursor de mano
-                itemRes.parentElement.onclick = () => {
-                    showPage('reportes');
-                    // Opcional: Generar reporte automáticamente al llegar
-                    setTimeout(() => generateReport(true), 500); 
-                };
-            }
-
-            // 2. Respuesta Promedio -> Lleva a REPORTES (Sin filtrar nada)
-            const itemTime = document.getElementById('summaryAvgTime');
-            if(itemTime) {
-                itemTime.parentElement.style.cursor = 'pointer';
-                itemTime.parentElement.onclick = () => {
-                    showPage('reportes'); // Solo cambia de página
-                    // Opcional: Generar el reporte automáticamente para ver el dato ahí
-                    setTimeout(() => generateReport(true), 500);
-                };
-            }
-
-            // 3. Satisfacción -> Lleva a Reportes (Gráfico de Prioridad/Satisfacción)
-            const itemSat = document.getElementById('summarySatisfaction');
-            if(itemSat) {
-                itemSat.parentElement.style.cursor = 'pointer';
-                itemSat.parentElement.onclick = () => {
-                    showPage('reportes');
-                    setTimeout(() => generateReport(true), 500);
-                };
-            }
-
-            // 2. Resumen Inferior (Agentes)
-            const itemAgents = document.getElementById('summaryAgents');
-            if(itemAgents) {
-                // Actualizamos el valor en la tarjeta
-                const agentValElement = document.getElementById('summaryAgentsVal');
-                if (agentValElement) agentValElement.textContent = agentes;
-
-                itemAgents.style.cursor = 'pointer';
-                itemAgents.onclick = () => {
-                    // 1. Ir a la página de Usuarios
-                    showPage('usuarios');
-
-                    // 2. Configurar el filtro de ROL para que seleccione "Técnico"
-                    const roleFilter = document.getElementById('filterRole');
-                    if (roleFilter) {
-                        // Asegúrate de que el valor 'tech' coincida con el de tu <option value="tech"> en el HTML
-                        roleFilter.value = 'tech'; 
-                    }
-
-                    // 3. Opcional: Filtrar también por 'Activo' para ver solo los disponibles
-                    const statusFilter = document.getElementById('filterStatus');
-                    if (statusFilter) {
-                        statusFilter.value = 'active';
-                    }
-                    
-                    // 4. Limpiar la barra de búsqueda para que no interfiera
-                    const searchInput = document.getElementById('searchInput');
-                    if (searchInput) {
-                        searchInput.value = '';
-                    }
-
-                    // 5. ¡Aplicar los filtros!
-                    // Esta función es la que lee los selects y actualiza la tabla
-                    if (typeof applyUserFilters === 'function') {
-                        applyUserFilters();
-                    }
-                };
-            }
+            // Actualizar Tarjetas de Gestión
+            if(document.getElementById('openTickets')) document.getElementById('openTickets').textContent = pendientes;
+            if(document.getElementById('avgResponseTime')) document.getElementById('avgResponseTime').textContent = promedioHoras;
+            if(document.getElementById('resolvedTicketsCardValue')) document.getElementById('resolvedTicketsCardValue').textContent = resueltos;
+            if(document.getElementById('satisfactionRate')) document.getElementById('satisfactionRate').textContent = satisfaccionPorcentaje + '%';
         }
 
         function downloadCSV(data, filename) {
