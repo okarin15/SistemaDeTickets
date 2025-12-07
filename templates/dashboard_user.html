@@ -779,68 +779,115 @@
             line-height: 1.6;
         }
 
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-            }
+    /* === VISTA MÓVIL PROFESIONAL (USER) === */
+    @media (max-width: 768px) {
+        /* 1. Layout General */
+        .mobile-menu-btn { display: block; position: fixed; top: 15px; right: 15px; z-index: 2000; background: var(--primary); color: white; padding: 10px; border-radius: 8px; border:none; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .sidebar { transform: translateX(-100%); position: fixed; z-index: 1500; height: 100vh; top: 0; left: 0; transition: transform 0.3s ease; }
+        .sidebar.active { transform: translateX(0); }
+        .main-content { margin-left: 0; width: 100%; padding: 80px 15px 30px 15px; }
+        
+        /* 2. Filtros y Tarjetas Superiores */
+        .cards-container { grid-template-columns: 1fr 1fr; gap: 10px; } /* 2 columnas para contadores */
+        .filters-container { flex-direction: column; gap: 10px; }
+        .search-box, .filter-select, .btn { width: 100% !important; margin: 0; }
 
-            .sidebar.active {
-                transform: translateX(0);
-            }
+        /* 3. TRANSFORMAR TABLA EN TARJETAS */
+        table, thead, tbody, th, td, tr { display: block; } /* Romper estructura de tabla */
+        thead { display: none; } /* Ocultar cabeceras */
 
-            .main-content {
-                margin-left: 0;
-                width: 100%;
-                padding: 20px;
-            }
-
-            .header {
-                flex-direction: column;
-                gap: 15px;
-                align-items: flex-start;
-            }
-
-            .filters-container {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .search-box {
-                min-width: auto;
-            }
-
-            .cards-container {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .action-buttons {
-                flex-direction: column;
-                gap: 5px;
-            }
-
-            .mobile-menu-btn {
-                display: block;
-                position: fixed;
-                top: 20px;
-                left: 20px;
-                z-index: 1001;
-                background: var(--primary);
-                color: white;
-                border: none;
-                border-radius: var(--border-radius);
-                padding: 10px 15px;
-                font-size: 1.1rem;
-                cursor: pointer;
-            }
+        tbody tr {
+            background: #fff;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+            padding: 0; /* Padding controlado en los hijos */
+            overflow: hidden; /* Para que el borde redondeado funcione */
+            position: relative;
         }
+
+        /* ID del Ticket (Esquina superior) */
+        tbody td:nth-of-type(1) {
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 0.8rem;
+            padding: 10px 15px;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        /* Título (Grande y negrita) */
+        tbody td:nth-of-type(2) {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--text-light);
+            padding: 15px 15px 5px 15px;
+            border: none;
+        }
+
+        /* Estado (Pill flotante o debajo del título) */
+        tbody td:nth-of-type(3) {
+            padding: 5px 15px;
+            border: none;
+            display: inline-block;
+        }
+
+        /* Fechas (Texto pequeño) */
+        tbody td:nth-of-type(4), 
+        tbody td:nth-of-type(5) {
+            padding: 2px 15px;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            border: none;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+        /* Agregar iconos falsos con CSS para las fechas */
+        tbody td:nth-of-type(4)::before { content: '📅 Creado: '; }
+        tbody td:nth-of-type(5)::before { content: '🕒 Actualizado: '; }
+
+        /* Botones de Acción (Footer de la tarjeta) */
+        tbody td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        tbody td:last-child {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 10px;
+            justify-content: stretch;
+        }
+        
+        .action-btn {
+            flex: 1;
+            justify-content: center;
+            padding: 12px;
+            font-size: 1rem;
+        }
+    }
+
+    .mobile-overlay {
+        display: none;
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.5); z-index: 999; backdrop-filter: blur(2px);
+    }
+    .mobile-overlay.active { display: block; }
     </style>
 </head>
 <body>
-    <button class="mobile-menu-btn" id="mobileMenuBtn" style="display: none;">
+    <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">
         <i class="fas fa-bars"></i>
     </button>
+
+    <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
 
     <div class="container">
         <div class="sidebar" id="sidebar">
@@ -1125,9 +1172,6 @@
             const commentForm = document.getElementById('commentForm');
             if (commentForm) commentForm.addEventListener('submit', handleCommentSubmit);
 
-            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-            if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMobileMenu);
-
             window.addEventListener('resize', handleResize);
             handleResize();
         }
@@ -1186,6 +1230,7 @@
 
         function toggleMobileMenu() {
             document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('mobileOverlay').classList.toggle('active');
         }
 
         function handleResize() {
@@ -1684,6 +1729,7 @@ function renderComments(ticket) {
                 }
             });
         };
+
     </script>
 
     {% if messages %}

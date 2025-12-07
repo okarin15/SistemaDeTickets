@@ -1437,9 +1437,170 @@
         opacity: 0.5;
         cursor: not-allowed;
     }
+
+    /* === ESTILOS MÓVILES (ADMIN) === */
+    .mobile-menu-btn {
+        display: none;
+        position: fixed; top: 15px; right: 15px; z-index: 1001;
+        background: var(--primary); color: white; border: none;
+        padding: 10px 15px; border-radius: 8px; font-size: 1.2rem; cursor: pointer;
+    }
+    @media (max-width: 992px) {
+        .mobile-menu-btn { display: block; }
+        .sidebar { transform: translateX(-100%); position: fixed; top:0; left:0; height:100%; z-index:1000; box-shadow: 5px 0 15px rgba(0,0,0,0.2); }
+        .sidebar.active { transform: translateX(0); }
+        .main-content { margin-left: 0; padding: 15px; width: 100%; }
+        .header { flex-direction: column; align-items: flex-start; gap: 15px; }
+        .dashboard-stats, .cards-container, .summary-grid, .charts-grid { grid-template-columns: 1fr !important; }
+        .filter-container { flex-direction: column; align-items: stretch; }
+        .filter-select, .search-bar input, .btn { width: 100%; margin-bottom: 10px; }
+        .table-container { overflow-x: auto; }
+        table { min-width: 700px; }
+    }
+
+    /* === TRANSFORMACIÓN MÓVIL: DE TABLA A TARJETAS === */
+    @media (max-width: 768px) {
+        /* 1. Ocultar encabezados de tabla */
+        thead {
+            display: none;
+        }
+
+        /* 2. Convertir filas en Tarjetas */
+        tbody tr {
+            display: block;
+            background: #ffffff;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+        }
+
+        /* 3. Ajustar celdas para que se vean como lista */
+        tbody td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: right;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.95rem;
+        }
+
+        tbody td:last-child {
+            border-bottom: none;
+            justify-content: center;
+            padding-top: 15px;
+            gap: 10px;
+        }
+
+        /* 4. Etiquetas automáticas (Truco CSS para poner títulos sin tocar HTML) */
+        /* Esto pone el nombre de la columna a la izquierda */
+        
+        /* Ajuste específico para Admin/Técnico */
+        td::before {
+            content: attr(data-label); /* Si usaras data-label */
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            margin-right: 15px;
+            text-align: left;
+        }
+
+        /* 5. Ajustar botones de acción para dedos gordos */
+        .action-buttons {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            flex: 1;
+            justify-content: center;
+            padding: 12px;
+        }
+
+        /* 6. Arreglos generales de Layout Móvil */
+        .main-content {
+            padding: 70px 15px 15px 15px !important; /* Espacio para el botón de menú */
+        }
+    }
+
+    /* === ESTILOS EXTRA MÓVIL (ADMIN) === */
+    .mobile-overlay {
+        display: none;
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.5); /* Fondo semitransparente */
+        z-index: 999; /* Debajo del sidebar (1000) pero encima del contenido */
+        backdrop-filter: blur(2px); /* Efecto borroso elegante */
+    }
+    .mobile-overlay.active { display: block; }
+
+    /* === VISTA MÓVIL PROFESIONAL (ADMIN) === */
+    @media (max-width: 992px) {
+        .mobile-menu-btn { display: block; position: fixed; top: 15px; right: 15px; z-index: 1001; background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .sidebar { transform: translateX(-100%); position: fixed; top:0; left:0; height:100%; z-index:1000; box-shadow: 5px 0 15px rgba(0,0,0,0.2); }
+        .sidebar.active { transform: translateX(0); }
+        .main-content { margin-left: 0; padding: 80px 15px 20px 15px; width: 100%; }
+        
+        .dashboard-stats { grid-template-columns: 1fr 1fr; gap: 10px; } /* 2 columnas */
+        .filter-container { flex-direction: column; align-items: stretch; }
+        .search-bar input, .filter-select, .btn { width: 100% !important; margin-bottom: 10px; }
+
+        /* Estilo Tarjeta para Tablas */
+        table, thead, tbody, th, td, tr { display: block; }
+        thead { display: none; }
+
+        tbody tr {
+            background: var(--dark-light); /* Respeta el tema oscuro del admin */
+            border-radius: 10px;
+            margin-bottom: 15px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Configuración de celdas */
+        tbody td {
+            border: none;
+            padding: 5px 0;
+            display: flex;
+            justify-content: space-between; /* Etiqueta a la izq, valor a la der */
+            align-items: center;
+            font-size: 0.95rem;
+            text-align: right;
+        }
+
+        /* Etiquetas automáticas para Admin (Vital para entender los datos) */
+        tbody td:nth-of-type(1)::before { content: "ID"; font-weight: bold; color: var(--text-muted); }
+        tbody td:nth-of-type(2)::before { content: "Título"; font-weight: bold; color: var(--text-muted); }
+        tbody td:nth-of-type(3)::before { content: "Área"; font-weight: bold; color: var(--text-muted); }
+        tbody td:nth-of-type(4)::before { content: "Usuario"; font-weight: bold; color: var(--text-muted); }
+        tbody td:nth-of-type(5)::before { content: "Prioridad"; font-weight: bold; color: var(--text-muted); }
+        tbody td:nth-of-type(6):before { content: "Estado"; font-weight: bold; color: var(--text-muted); }
+        
+        /* Botones al final */
+        tbody td:last-child {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-color);
+            justify-content: flex-end;
+            gap: 10px;
+        }
+    }
     </style>
 </head>
 <body data-theme="light">
+    <!-- Botón para menú móvil -->
+    <button class="mobile-menu-btn" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="mobile-overlay" id="mobileOverlay" onclick="toggleSidebar()"></div>
+
+
     <!-- Switch de tema -->
     <div class="theme-switch">
         <button class="theme-btn" id="themeToggle">
@@ -1583,38 +1744,19 @@
 
                 <!-- Página: Gestión de Tickets -->
                 <div id="tickets-page" class="page-content">
-<div class="cards-container">
-    <div class="card" id="ticketsOpenCard">
-        <h3>Tickets Abiertos (Pendientes)</h3>
-        <div class="value" id="openTickets">0</div>
-        </div>
-    <div class="card" id="ticketsResponseTimeCard">
-        <h3>Tiempo Promedio Respuesta</h3>
-        <div class="value" id="avgResponseTime">-</div>
-        </div>
-    <div class="card" id="ticketsResolvedCard">
-        <h3>Tickets Resueltos</h3>
-        <div class="value" id="resolvedTicketsCardValue">0</div>
-        </div>
-    <div class="card" id="ticketsSatisfactionCard">
-        <h3>Satisfacción</h3>
-        <div class="value" id="satisfactionRate">-</div>
-        </div>
-</div>
-
                     <div class="filter-container">
                         <div class="search-bar">
                             <input type="text" id="ticketSearch" placeholder="Buscar tickets...">
                         </div>
                         <select class="filter-select" id="ticketStatusFilter">
-                            <option value="">Todos los estados</option>
-                            <option value="custom_pending">Pendientes y En Progreso</option>
-                            <option value="all_resolved">Resueltos y Cerrados</option>
-                            <option value="pending">Nuevo (Solo)</option>
-                            <option value="in-progress">En Progreso (Solo)</option>
-                            <option value="completed">Resuelto (Solo)</option>
-                            <option value="closed">Cerrado (Solo)</option>
-                        </select>
+    <option value="">Todos los estados</option>
+    <option value="custom_pending">Pendientes y En Progreso</option>
+    <option value="all_resolved">Resueltos y Cerrados</option>
+    <option value="pending">Nuevo (Solo)</option>
+    <option value="in-progress">En Progreso (Solo)</option>
+    <option value="completed">Resuelto (Solo)</option>
+    <option value="closed">Cerrado (Solo)</option>
+</select>
                         <select class="filter-select" id="ticketPriorityFilter">
                             <option value="">Todas las prioridades</option>
                             <option value="critical">Crítica</option>
@@ -2473,7 +2615,7 @@
                 cardPendingDash.addEventListener('click', () => {
                     showPage('tickets');
                     // Usaremos un valor especial 'custom_pending'
-                    document.getElementById('ticketStatusFilter').value = 'custom_pending';
+                    document.getElementById('ticketStatusFilter').value = 'custom_pending'; // Correcto: Pendientes y en progreso
                     document.getElementById('ticketPriorityFilter').value = '';
                     applyTicketFilters();
                 });
@@ -2486,7 +2628,7 @@
                 cardResolvedDash.addEventListener('click', () => {
                     showPage('tickets');
                     // Usaremos valor especial 'all_resolved'
-                    document.getElementById('ticketStatusFilter').value = 'all_resolved'; 
+                    document.getElementById('ticketStatusFilter').value = 'all_resolved'; // Correcto: Resueltos y cerrados
                     document.getElementById('ticketPriorityFilter').value = '';
                     applyTicketFilters();
                 });
@@ -2498,62 +2640,13 @@
                 cardCriticalDash.style.cursor = 'pointer';
                 cardCriticalDash.addEventListener('click', () => {
                     showPage('tickets');
-                    document.getElementById('ticketPriorityFilter').value = 'critical'; 
+                    document.getElementById('ticketPriorityFilter').value = 'critical'; // Correcto: Prioridad crítica
                     // Queremos ver los críticos que están abiertos
-                    document.getElementById('ticketStatusFilter').value = 'custom_pending';
+                    document.getElementById('ticketStatusFilter').value = 'custom_pending'; // Correcto: Que no estén resueltos
                     applyTicketFilters();
                 });
             }
 
-            // --- TARJETAS DE GESTIÓN DE TICKETS ---
-            
-            // 1. Tickets Abiertos -> Filtra por Pendiente
-            const btnOpen = document.getElementById('ticketsOpenCard');
-            if (btnOpen) {
-                btnOpen.style.cursor = 'pointer';
-                btnOpen.addEventListener('click', () => {
-                    // Limpiar otros filtros
-                    document.getElementById('ticketSearch').value = '';
-                    document.getElementById('ticketPriorityFilter').value = '';
-                    // Aplicar filtro Pendiente
-                    document.getElementById('ticketStatusFilter').value = 'pending';
-                    applyTicketFilters();
-                });
-            }
-
-            // 2. Tarjeta "Tiempo Promedio" -> REDIRIGE A REPORTES
-            const btnTime = document.getElementById('ticketsResponseTimeCard');
-            if (btnTime) {
-                btnTime.style.cursor = 'pointer';
-                btnTime.addEventListener('click', () => {
-                    showPage('reportes'); // <--- CAMBIO: Va a Reportes
-                    setTimeout(() => generateReport(true), 500);
-                });
-            }
-
-            // 3. Tarjeta "Tickets Resueltos" -> FILTRA POR 'all_resolved'
-            const btnResolved = document.getElementById('ticketsResolvedCard');
-            if (btnResolved) { btnResolved.style.cursor = 'pointer'; btnResolved.addEventListener('click', () => { document.getElementById('ticketSearch').value = ''; document.getElementById('ticketPriorityFilter').value = ''; document.getElementById('ticketStatusFilter').value = 'all_resolved'; applyTicketFilters(); }); }
-
-            // 4. Tarjeta "Satisfacción" -> REDIRIGE A REPORTES
-            const btnSat = document.getElementById('ticketsSatisfactionCard');
-            if (btnSat) {
-                btnSat.style.cursor = 'pointer';
-                btnSat.addEventListener('click', () => {
-                    showPage('reportes'); // <--- CAMBIO: Va a Reportes
-                    setTimeout(() => generateReport(true), 500);
-                });
-            }
-            
-            // 4. Tarjeta "Tiempo Promedio" -> Lleva a REPORTES
-             const cardTime = document.getElementById('ticketsResponseTimeCard');
-            if (cardTime) {
-                cardTime.style.cursor = 'pointer';
-                cardTime.addEventListener('click', () => {
-                    showPage('reportes'); // <-- CAMBIO: Ahora va a reportes
-                    setTimeout(() => generateReport(true), 500);
-                });
-            }
         }
 
         // ===== SISTEMA DE TEMA =====
@@ -2733,6 +2826,11 @@
         }
 
         function toggleMobileMenu() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        // Función para el nuevo botón de menú (hace lo mismo)
+        function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('active');
         }
 
@@ -3704,80 +3802,6 @@ function handleTicketSubmit(e) {
             return date.toLocaleDateString('es-ES');
         }
 
-        function updateDashboardStats() {
-            if (!currentTickets) return;
-            const total = currentTickets.length;
-            
-            // Agentes: Filtramos y contamos
-            const agentes = currentUsers.filter(u => 
-                (u.rol === 'tech' || u.rol === 'support') && u.estado === 'active'
-            ).length;
-
-            // 1. PENDIENTES: Ahora suma 'new' Y 'in-progress'
-            const pendientes = currentTickets.filter(t => 
-                ['new', 'pending', 'nuevo', 'pendiente', 'in-progress', 'en_progreso', 'en progreso'].includes((t.estado || '').toLowerCase())
-            ).length;
-            
-            // 2. RESUELTOS: Suma 'resolved' Y 'closed'
-            const resueltos = currentTickets.filter(t => 
-                ['resolved', 'completed', 'closed', 'cerrado', 'resuelto'].includes((t.estado || '').toLowerCase())
-            ).length;
-
-            // 3. CRÍTICOS: Prioridad Alta/Crítica Y que NO estén terminados
-            const criticos = currentTickets.filter(t => {
-                const p = (t.prioridad || '').toLowerCase();
-                const s = (t.estado || '').toLowerCase();
-                const esCritico = ['high', 'alta', 'critical', 'critica'].includes(p);
-                const estaAbierto = !['resolved', 'completed', 'closed', 'cerrado', 'resuelto'].includes(s);
-                return esCritico && estaAbierto;
-            }).length;
-
-            // --- Actualizar Pantalla ---
-            if(document.getElementById('totalTicketsStat')) document.getElementById('totalTicketsStat').textContent = total;
-            if(document.getElementById('pendingTicketsStat')) document.getElementById('pendingTicketsStat').textContent = pendientes;
-            if(document.getElementById('resolvedTicketsStat')) document.getElementById('resolvedTicketsStat').textContent = resueltos;
-            if(document.getElementById('criticalTicketsStat')) document.getElementById('criticalTicketsStat').textContent = criticos;
-            
-            // Resumen Inferior (Agentes)
-             if(document.getElementById('summaryAgentsVal')) document.getElementById('summaryAgentsVal').textContent = agentes;
-
-            // --- CÁLCULOS DE EFICIENCIA ---
-            let sumaHoras = 0;
-            let ticketsConTiempo = 0;
-            let sumaEstrellas = 0;
-            let ticketsVotados = 0;
-
-            currentTickets.forEach(t => {
-                if (t.horas && parseFloat(t.horas) > 0) {
-                    sumaHoras += parseFloat(t.horas);
-                    ticketsConTiempo++;
-                }
-                if (t.calificacion && parseInt(t.calificacion) > 0) {
-                    sumaEstrellas += parseInt(t.calificacion);
-                    ticketsVotados++;
-                }
-            });
-
-            const promedioHoras = ticketsConTiempo > 0 ? (sumaHoras / ticketsConTiempo).toFixed(1) + 'h' : '-';
-            let satisfaccionPorcentaje = 0;
-            if (ticketsVotados > 0) {
-                satisfaccionPorcentaje = Math.round((sumaEstrellas / ticketsVotados / 5) * 100);
-            }
-            const tasaResolucion = total > 0 ? Math.round((resueltos / total) * 100) : 0;
-
-            // Actualizar Métricas KPI
-            if(document.getElementById('summaryResolution')) document.getElementById('summaryResolution').textContent = tasaResolucion + '%';
-            if(document.getElementById('summaryAvgTime')) document.getElementById('summaryAvgTime').textContent = promedioHoras;
-            if(document.getElementById('summarySatisfaction')) document.getElementById('summarySatisfaction').textContent = satisfaccionPorcentaje + '%';
-            
-
-            // Actualizar Tarjetas de Gestión
-            if(document.getElementById('openTickets')) document.getElementById('openTickets').textContent = pendientes;
-            if(document.getElementById('avgResponseTime')) document.getElementById('avgResponseTime').textContent = promedioHoras;
-            if(document.getElementById('resolvedTicketsCardValue')) document.getElementById('resolvedTicketsCardValue').textContent = resueltos;
-            if(document.getElementById('satisfactionRate')) document.getElementById('satisfactionRate').textContent = satisfaccionPorcentaje + '%';
-        }
-
         function downloadCSV(data, filename) {
             const headers = Object.keys(data[0]);
             const csvContent = [
@@ -4100,6 +4124,118 @@ function handleTicketSubmit(e) {
     function closeFaqModal() { document.getElementById('faqModal').classList.remove('active'); }
     window.editFaq = function(id) { openFaqModal(id); }
 
+    </script>
+
+    <script>
+    // 1. Alternar Menú Móvil
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('active');
+        document.getElementById('mobileOverlay').classList.toggle('active');
+    }
+
+    // 2. Contadores Corregidos
+function updateDashboardStats() {
+        // Usamos masterTickets para que el Dashboard muestre SIEMPRE el estado global,
+        // sin importar si filtras la tabla de abajo.
+        const data = masterTickets; 
+        if (!data) return;
+
+        const total = data.length;
+        
+        // --- 1. TARJETAS SUPERIORES (Contadores) ---
+        const pendientes = data.filter(t => ['new', 'pending', 'nuevo', 'pendiente', 'in-progress', 'en_progreso', 'en progreso'].includes((t.estado || '').toLowerCase())).length;
+        
+        const resueltos = data.filter(t => ['resolved', 'completed', 'closed', 'cerrado', 'resuelto'].includes((t.estado || '').toLowerCase())).length;
+        
+        const criticos = data.filter(t => {
+            const p = (t.prioridad || '').toLowerCase();
+            const s = (t.estado || '').toLowerCase();
+            // Es crítico si es Alta/Critica Y NO está resuelto
+            return ['high', 'alta', 'critical', 'critica'].includes(p) && !['resolved', 'completed', 'closed', 'cerrado', 'resuelto'].includes(s);
+        }).length;
+
+        // Actualizar DOM Tarjetas
+        if(document.getElementById('totalTicketsStat')) document.getElementById('totalTicketsStat').textContent = total;
+        if(document.getElementById('pendingTicketsStat')) document.getElementById('pendingTicketsStat').textContent = pendientes;
+        if(document.getElementById('resolvedTicketsStat')) document.getElementById('resolvedTicketsStat').textContent = resueltos;
+        if(document.getElementById('criticalTicketsStat')) document.getElementById('criticalTicketsStat').textContent = criticos;
+
+        // --- 2. MÉTRICAS DE EFICIENCIA (Lo que faltaba) ---
+        
+        let sumaHoras = 0;
+        let countHoras = 0;
+        let sumaStars = 0;
+        let countStars = 0;
+
+        data.forEach(t => {
+            // Calcular Horas (Solo si tiene dato)
+            const h = parseFloat(t.horas);
+            if (!isNaN(h) && h > 0) {
+                sumaHoras += h;
+                countHoras++;
+            }
+            
+            // Calcular Estrellas (Solo si tiene calificación)
+            const s = parseInt(t.calificacion);
+            if (!isNaN(s) && s > 0) {
+                sumaStars += s;
+                countStars++;
+            }
+        });
+
+        // Cálculos Finales
+        // Tasa de Resolución: (Resueltos / Total) * 100
+        const tasaResolucion = total > 0 ? Math.round((resueltos / total) * 100) : 0;
+        
+        // Tiempo Promedio
+        const avgTime = countHoras > 0 ? (sumaHoras / countHoras).toFixed(1) + 'h' : '-';
+        
+        // Satisfacción (Promedio de estrellas convertido a %)
+        // 5 estrellas = 100%, 1 estrella = 20%
+        const avgSat = countStars > 0 ? Math.round((sumaStars / countStars / 5) * 100) + '%' : '-';
+
+        // Actualizar DOM Métricas
+        if(document.getElementById('summaryResolution')) document.getElementById('summaryResolution').textContent = tasaResolucion + '%';
+        if(document.getElementById('summaryAvgTime')) document.getElementById('summaryAvgTime').textContent = avgTime;
+        if(document.getElementById('summarySatisfaction')) document.getElementById('summarySatisfaction').textContent = avgSat;
+
+        // Agentes de Soporte (Contar usuarios técnicos activos)
+        const agentes = masterUsers.filter(u => (u.rol === 'tech' || u.rol === 'support') && u.estado === 'active').length;
+        if(document.getElementById('summaryAgentsVal')) document.getElementById('summaryAgentsVal').textContent = agentes;
+    }
+
+    // 3. Filtros Corregidos (Para los botones)
+    function applyTicketFilters() {
+        const searchTerm = document.getElementById('ticketSearch').value.toLowerCase();
+        const statusFilter = document.getElementById('ticketStatusFilter').value;
+        const priorityFilter = document.getElementById('ticketPriorityFilter').value;
+        const areaFilter = document.getElementById('ticketAreaFilter').value;
+
+        const filteredTickets = masterTickets.filter(ticket => {
+            const matchesSearch = ticket.titulo.toLowerCase().includes(searchTerm) || 
+                                 ticket.usuario.toLowerCase().includes(searchTerm) ||
+                                 `T-${ticket.id.toString().padStart(6, '0')}`.includes(searchTerm);
+            
+            let matchesStatus = true;
+            const s = normalizeStatus(ticket.estado);
+
+            if (statusFilter === 'all_resolved') {
+                matchesStatus = (s === 'completed' || s === 'closed');
+            } else if (statusFilter === 'custom_pending') {
+                matchesStatus = (s === 'pending' || s === 'in-progress');
+            } else {
+                matchesStatus = !statusFilter || s === statusFilter;
+            }
+            
+            const matchesPriority = !priorityFilter || normalizePriority(ticket.prioridad) === priorityFilter;
+            const matchesArea = !areaFilter || (ticket.area || "Sin Categoría") === areaFilter;
+            
+            return matchesSearch && matchesStatus && matchesPriority && matchesArea;
+        });
+        
+        currentTickets = filteredTickets;
+        updateTicketsTable();
+    }
     </script>
 
     {% if messages %}
