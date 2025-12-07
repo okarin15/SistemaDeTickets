@@ -1608,10 +1608,12 @@
                         </div>
                         <select class="filter-select" id="ticketStatusFilter">
                             <option value="">Todos los estados</option>
-                            <option value="pending">Nuevo</option>
-                            <option value="in-progress">En Progreso</option>
-                            <option value="completed">Resuelto</option>
-                            <option value="closed">Cerrado</option>
+                            <option value="custom_pending">Pendientes y En Progreso</option>
+                            <option value="all_resolved">Resueltos y Cerrados</option>
+                            <option value="pending">Nuevo (Solo)</option>
+                            <option value="in-progress">En Progreso (Solo)</option>
+                            <option value="completed">Resuelto (Solo)</option>
+                            <option value="closed">Cerrado (Solo)</option>
                         </select>
                         <select class="filter-select" id="ticketPriorityFilter">
                             <option value="">Todas las prioridades</option>
@@ -2464,42 +2466,41 @@
                 });
             }
 
-            // 2. Tarjeta "Pendientes" -> Filtra estado: Pendiente
+            // 2. Tarjeta "Pendientes" -> Filtra estado: Pendiente O En Progreso
             const cardPendingDash = document.getElementById('cardPendingTickets');
             if (cardPendingDash) {
                 cardPendingDash.style.cursor = 'pointer';
                 cardPendingDash.addEventListener('click', () => {
                     showPage('tickets');
-                    document.getElementById('ticketStatusFilter').value = 'pending';
+                    // Usaremos un valor especial 'custom_pending'
+                    document.getElementById('ticketStatusFilter').value = 'custom_pending';
                     document.getElementById('ticketPriorityFilter').value = '';
                     applyTicketFilters();
                 });
             }
 
-            // 3. Tarjeta "Resueltos" -> Filtra estado: Resuelto
+            // 3. Tarjeta "Resueltos" -> Filtra estado: Resuelto O Cerrado
             const cardResolvedDash = document.getElementById('cardResolvedTickets');
             if (cardResolvedDash) {
                 cardResolvedDash.style.cursor = 'pointer';
                 cardResolvedDash.addEventListener('click', () => {
                     showPage('tickets');
-                    // Asegúrate de usar el value correcto ('completed' o 'resuelto')
-                    document.getElementById('ticketStatusFilter').value = 'completed'; 
+                    // Usaremos valor especial 'all_resolved'
+                    document.getElementById('ticketStatusFilter').value = 'all_resolved'; 
                     document.getElementById('ticketPriorityFilter').value = '';
                     applyTicketFilters();
                 });
             }
 
-            // 4. Tarjeta "Tickets Críticos" -> Filtra Prioridad: Alta + Estado: Pendiente
-            // (Nota: Asegúrate de que el ID en tu HTML sea 'cardCriticalTickets' o el que estés usando)
+            // 4. Tarjeta "Tickets Críticos"
             const cardCriticalDash = document.getElementById('cardCriticalTickets'); 
             if (cardCriticalDash) {
                 cardCriticalDash.style.cursor = 'pointer';
                 cardCriticalDash.addEventListener('click', () => {
                     showPage('tickets');
-                    // Filtramos por Alta/Crítica
-                    document.getElementById('ticketPriorityFilter').value = 'critical'; // <-- CAMBIO: 'high' por 'critical'
-                    // Y que estén pendientes (porque los resueltos no son urgencia)
-                    document.getElementById('ticketStatusFilter').value = 'pending';
+                    document.getElementById('ticketPriorityFilter').value = 'critical'; 
+                    // Queremos ver los críticos que están abiertos
+                    document.getElementById('ticketStatusFilter').value = 'custom_pending';
                     applyTicketFilters();
                 });
             }
@@ -3095,18 +3096,17 @@
                                      ticket.usuario.toLowerCase().includes(searchTerm) ||
                                      `T-${ticket.id.toString().padStart(6, '0')}`.includes(searchTerm);
                                      
-                // --- LÓGICA DE ESTADO MEJORADA ---
+                // --- LÓGICA DE ESTADO NUEVA ---
                 let matchesStatus = true;
-                const s = normalizeStatus(ticket.estado);
+                const s = normalizeStatus(ticket.estado); // Asegúrate de tener normalizeStatus
 
                 if (statusFilter === 'all_resolved') {
-                    // Si el filtro es "all_resolved", aceptamos 'completed' O 'closed'
                     matchesStatus = (s === 'completed' || s === 'closed');
+                } else if (statusFilter === 'custom_pending') {
+                    matchesStatus = (s === 'pending' || s === 'in-progress');
                 } else {
-                    // Comportamiento normal para el resto
                     matchesStatus = !statusFilter || s === statusFilter;
                 }
-                // ---------------------------------
 
                 const matchesPriority = !priorityFilter || normalizePriority(ticket.prioridad) === priorityFilter;
                 
@@ -3705,11 +3705,7 @@ function handleTicketSubmit(e) {
         }
 
         function updateDashboardStats() {
-            // ==========================================
-            // 1. CÁLCULOS BLINDADOS (NO EXPLOTAN CON DATOS VACÍOS)
-            // ==========================================
-            if (!currentTickets) return; // Protección básica
-            
+            if (!currentTickets) return;
             const total = currentTickets.length;
             
             // Agentes: Filtramos y contamos
@@ -3717,36 +3713,33 @@ function handleTicketSubmit(e) {
                 (u.rol === 'tech' || u.rol === 'support') && u.estado === 'active'
             ).length;
 
-            // Filtros de estado (Usamos || '' para evitar error en toLowerCase)
+            // 1. PENDIENTES: Ahora suma 'new' Y 'in-progress'
             const pendientes = currentTickets.filter(t => 
-                ['new', 'pending', 'nuevo', 'pendiente'].includes((t.estado || '').toLowerCase())
+                ['new', 'pending', 'nuevo', 'pendiente', 'in-progress', 'en_progreso', 'en progreso'].includes((t.estado || '').toLowerCase())
             ).length;
             
+            // 2. RESUELTOS: Suma 'resolved' Y 'closed'
             const resueltos = currentTickets.filter(t => 
                 ['resolved', 'completed', 'closed', 'cerrado', 'resuelto'].includes((t.estado || '').toLowerCase())
             ).length;
 
-            // --- AQUÍ ESTABA EL ERROR ---
-            // Antes: t.prioridad.toLowerCase() -> Si era null, explotaba.
-            // Ahora: (t.prioridad || '').toLowerCase() -> Si es null, usa texto vacío y sigue vivo.
-            const criticos = currentTickets.filter(t => 
-                ['high', 'alta', 'critical', 'critica'].includes((t.prioridad || '').toLowerCase()) &&
-                !['resolved', 'completed', 'closed', 'cerrado', 'resuelto'].includes((t.estado || '').toLowerCase())
-            ).length;
+            // 3. CRÍTICOS: Prioridad Alta/Crítica Y que NO estén terminados
+            const criticos = currentTickets.filter(t => {
+                const p = (t.prioridad || '').toLowerCase();
+                const s = (t.estado || '').toLowerCase();
+                const esCritico = ['high', 'alta', 'critical', 'critica'].includes(p);
+                const estaAbierto = !['resolved', 'completed', 'closed', 'cerrado', 'resuelto'].includes(s);
+                return esCritico && estaAbierto;
+            }).length;
 
-            // ==========================================
-            // 2. ACTUALIZAR PANTALLA
-            // ==========================================
-
-            // Tarjetas Superiores
+            // --- Actualizar Pantalla ---
             if(document.getElementById('totalTicketsStat')) document.getElementById('totalTicketsStat').textContent = total;
             if(document.getElementById('pendingTicketsStat')) document.getElementById('pendingTicketsStat').textContent = pendientes;
             if(document.getElementById('resolvedTicketsStat')) document.getElementById('resolvedTicketsStat').textContent = resueltos;
             if(document.getElementById('criticalTicketsStat')) document.getElementById('criticalTicketsStat').textContent = criticos;
             
             // Resumen Inferior (Agentes)
-            const agentValElement = document.getElementById('summaryAgentsVal');
-            if (agentValElement) agentValElement.textContent = agentes;
+             if(document.getElementById('summaryAgentsVal')) document.getElementById('summaryAgentsVal').textContent = agentes;
 
             // --- CÁLCULOS DE EFICIENCIA ---
             let sumaHoras = 0;
@@ -3777,6 +3770,7 @@ function handleTicketSubmit(e) {
             if(document.getElementById('summaryAvgTime')) document.getElementById('summaryAvgTime').textContent = promedioHoras;
             if(document.getElementById('summarySatisfaction')) document.getElementById('summarySatisfaction').textContent = satisfaccionPorcentaje + '%';
             
+
             // Actualizar Tarjetas de Gestión
             if(document.getElementById('openTickets')) document.getElementById('openTickets').textContent = pendientes;
             if(document.getElementById('avgResponseTime')) document.getElementById('avgResponseTime').textContent = promedioHoras;
