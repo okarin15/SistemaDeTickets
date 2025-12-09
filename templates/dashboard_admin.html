@@ -2128,6 +2128,15 @@
                         <option value="admin">Administrador</option>
                     </select>
                 </div>
+
+                <div class="form-group">
+                    <label>Estado de Cuenta</label>
+                    <select class="form-control" id="userStatus" name="estado" required>
+                        <option value="active">Activo (Permitir acceso)</option>
+                        <option value="inactive">Inactivo (Bloquear acceso)</option>
+                    </select>
+                </div>
+                
                 
                 <div class="form-group">
                     <label>Contraseña</label>
@@ -2159,6 +2168,17 @@
                     <label>Descripción</label>
                     <textarea class="form-control" id="ticketDescription" rows="4" required style="padding: 10px 12px;"></textarea>
                 </div>
+
+                <div class="form-group" id="adminFileContainer" style="display: none;">
+                    <label>Evidencia Adjunta</label>
+                    <div style="padding: 10px; background: #e0f2fe; border-radius: 8px; border: 1px solid #bae6fd; display: flex; align-items: center;">
+                        <i class="fas fa-paperclip" style="color: #0284c7; margin-right: 10px;"></i> 
+                        <a id="adminFileLink" href="#" target="_blank" style="color: #0284c7; text-decoration: underline; font-weight: bold;">
+                            Ver Archivo Adjunto <i class="fas fa-external-link-alt"></i>
+                        </a>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label>Área Afectada</label>
                     <p id="modalTicketArea" style="font-weight: 600; color: var(--text-light);"></p>
@@ -2169,6 +2189,7 @@
                         <option value="low">Baja</option>
                         <option value="medium">Media</option>
                         <option value="high">Alta</option>
+                        <option value="critical">Crítica</option> 
                     </select>
                 </div>
                 <div class="form-group">
@@ -2920,9 +2941,6 @@
                         <button class="action-btn reset" onclick="resetPassword(${user.id})" title="Restablecer contraseña">
                             <i class="fas fa-key"></i> Reset Pass
                         </button>
-                        <button class="action-btn delete" onclick="deleteUser(${user.id})" title="Eliminar usuario permanentemente">
-                            <i class="fas fa-trash"></i> Eliminar
-                        </button>
                     </td>
                 `;
                 usersBody.appendChild(row);
@@ -3129,73 +3147,71 @@
         renderPaginationControls(currentTickets.length, currentPage.tickets, 'ticketsPagination', 'tickets');
     }
 
-        function updateRecentTickets() {
-            const tbody = document.getElementById('recentTicketsBody');
-            if (!tbody) return;
-            
-            tbody.innerHTML = '';
-            
-            // Tomamos los 5 más recientes
-            const recentTickets = currentTickets.slice(0, 5);
-            
-            recentTickets.forEach(ticket => {
-                const row = document.createElement('tr');
+    function updateRecentTickets() {
+        const tbody = document.getElementById('recentTicketsBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        
+        // Tomamos los 5 más recientes
+        const recentTickets = currentTickets.slice(0, 5);
+        
+        recentTickets.forEach(ticket => {
+            const row = document.createElement('tr');
 
-                // --- LÓGICA SLA MATEMÁTICA (IGUAL QUE LA TABLA PRINCIPAL) ---
-                let slaIcon = '';
-                let slaTexto = '';
-                
-                // 1. Asegurar valores numéricos
-                const horasUsadas = parseFloat(ticket.horas) || 0;
-                const horasLimite = parseFloat(ticket.horas_limite) || 48; 
-                
-                // 2. Calcular la resta real
-                const horasRestantes = horasLimite - horasUsadas;
+            // === LÓGICA SLA V2 (IGUAL QUE LA TABLA GRANDE) ===
+            let slaIcon = '';
+            
+            // 1. Calcular tiempos
+            const horasUsadas = parseFloat(ticket.horas) || 0;
+            const horasLimite = parseFloat(ticket.horas_limite) || 48;
+            const horasRestantes = horasLimite - horasUsadas;
+            
+            // 2. Verificar si está cerrado
+            const s = normalizeStatus(ticket.estado);
+            const estaCerrado = (s === 'completed' || s === 'closed' || s === 'resolved');
 
-                // 3. Decidir ícono
-                if (horasRestantes < 0) {
-                    // VENCIDO (Fuego)
-                    slaIcon = `<i class="fas fa-fire" style="color: #ef4444;" title="Vencido"></i>`;
-                    slaTexto = `<span style="color: #ef4444; font-weight:bold;">+${Math.abs(horasRestantes).toFixed(1)}h</span>`;
-                } else if (horasRestantes < 10) {
-                    // POR VENCER (Triángulo)
-                    slaIcon = `<i class="fas fa-exclamation-triangle" style="color: #f59e0b;" title="Por vencer"></i>`;
-                    slaTexto = `<span style="color: #f59e0b; font-weight:bold;">Quedan ${horasRestantes.toFixed(1)}h</span>`;
+            if (estaCerrado) {
+                // CERRADO: Veredicto Final
+                if (horasRestantes >= 0) {
+                    slaIcon = `<i class="fas fa-check-double" style="color: #10b981;" title="En Plazo"></i>`;
                 } else {
-                    // A TIEMPO (Check)
-                    slaIcon = `<i class="fas fa-check-circle" style="color: #10b981;" title="En tiempo"></i>`;
-                    slaTexto = `<span style="color: #10b981;">Quedan ${horasRestantes.toFixed(1)}h</span>`;
+                    slaIcon = `<i class="fas fa-times-circle" style="color: #64748b;" title="Fuera de Plazo"></i>`;
                 }
-                // ------------------------------------------------------------
+            } else {
+                // ABIERTO: Cuenta Regresiva
+                if (horasRestantes < 0) {
+                    slaIcon = `<i class="fas fa-fire" style="color: #ef4444;" title="Vencido"></i>`;
+                } else if (horasRestantes < 10) {
+                    slaIcon = `<i class="fas fa-exclamation-triangle" style="color: #f59e0b;" title="Por vencer"></i>`;
+                } else {
+                    slaIcon = `<i class="fas fa-clock" style="color: #3b82f6;" title="En tiempo"></i>`;
+                }
+            }
+            // =================================================
 
-                row.innerHTML = `
-                    <td><strong>T-${ticket.id.toString().padStart(6, '0')}</strong></td>
-                    <td>${ticket.titulo}</td>
-                    <td>${ticket.area || '-'}</td>
-                    <td>${ticket.usuario}</td>
-                    <td><span class="priority ${normalizePriority(ticket.prioridad)}" style="cursor: default;">${getPriorityText(ticket.prioridad)}</span></td>
-                    
-                    <td style="display: flex; align-items: center; gap: 10px;">
-                        <span class="status ${normalizeStatus(ticket.estado)}">${getStatusText(ticket.estado)}</span>
-                        <div style="font-size: 1.2rem; min-width: 20px; text-align: center;">
-                            ${slaIcon}
-                        </div>
-                        <div style="font-size: 0.85rem;">
-                            ${slaTexto}
-                        </div>
-                    </td>
-                    
-                    <td>${formatDate(ticket.fecha)}</td>
-                    <td>${ticket.agente || '-'}</td>
-                    <td class="action-buttons">
-                        <button class="action-btn edit" onclick="editTicket(${ticket.id})" title="Editar ticket">
-                            <i class="fas fa-edit"></i> EDITAR
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
+            row.innerHTML = `
+                <td><strong>T-${ticket.id.toString().padStart(6, '0')}</strong></td>
+                <td>${ticket.titulo}</td>
+                <td>${ticket.area || '-'}</td>
+                <td>${ticket.usuario}</td>
+                <td><span class="priority ${normalizePriority(ticket.prioridad)}" style="cursor: default;">${getPriorityText(ticket.prioridad)}</span></td>
+                
+                <td style="display: flex; align-items: center; gap: 5px;">
+                    <span class="status ${normalizeStatus(ticket.estado)}">${getStatusText(ticket.estado)}</span>
+                    <div style="font-size: 1.1rem; margin-left: 5px;">${slaIcon}</div>
+                </td>
+                
+                <td>${formatDate(ticket.fecha)}</td>
+                <td>${ticket.agente || '-'}</td>
+                <td class="action-buttons">
+                    <button class="action-btn edit" onclick="editTicket(${ticket.id})" title="Editar ticket">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
 
         
         function applyTicketFilters() {
@@ -3307,7 +3323,7 @@ window.viewTicket = function(ticketId) {
         // ===== SISTEMA DE MODALES =====
         
         
-        function openUserModal(user = null) {
+    function openUserModal(user = null) {
         const modal = document.getElementById('userModal');
         const title = document.getElementById('userModalTitle');
         const form = document.getElementById('userForm');
@@ -3318,6 +3334,10 @@ window.viewTicket = function(ticketId) {
         const fullNameInput = document.getElementById('fullName');
         const emailInput = document.getElementById('email');
         const roleInput = document.getElementById('userRole');
+        
+        // NUEVA REFERENCIA AL CAMPO ESTADO
+        const statusInput = document.getElementById('userStatus'); 
+
         const passwordInput = document.getElementById('password');
         const passHelp = document.getElementById('passHelp');
         
@@ -3328,12 +3348,13 @@ window.viewTicket = function(ticketId) {
             usernameInput.value = user.username;
             fullNameInput.value = user.nombre;
             emailInput.value = user.email;
+            roleInput.value = user.rol;
             
-            // Seleccionar el rol correcto
-            // (Asegúrate de que user.rol traiga 'admin', 'tech' o 'user')
-            roleInput.value = user.rol; 
+            // CARGAR EL ESTADO ACTUAL
+            // Si user.estado viene como 'active'/'inactive' funcionará directo.
+            // Si viene vacío, por defecto lo ponemos activo.
+            statusInput.value = user.estado || 'active'; 
             
-            // La contraseña no se muestra, es opcional en edición
             passwordInput.value = '';
             passwordInput.removeAttribute('required');
             passHelp.style.display = 'block';
@@ -3342,9 +3363,11 @@ window.viewTicket = function(ticketId) {
             // MODO CREACIÓN
             title.textContent = 'Crear Nuevo Usuario';
             form.reset();
-            userIdInput.value = ''; // ID vacío indica crear
+            userIdInput.value = ''; 
             
-            // Contraseña obligatoria al crear
+            // POR DEFECTO ACTIVO AL CREAR
+            statusInput.value = 'active';
+            
             passwordInput.setAttribute('required', 'required');
             passHelp.style.display = 'none';
         }
@@ -3397,6 +3420,19 @@ window.viewTicket = function(ticketId) {
                 if (titleEl) titleEl.textContent = 'Editar Ticket';
                 document.getElementById('ticketTitle').value = ticket.titulo || '';
                 document.getElementById('ticketDescription').value = ticket.descripcion || '';
+                
+                // === NUEVO: LÓGICA PARA MOSTRAR ARCHIVO ===
+                const fileContainer = document.getElementById('adminFileContainer');
+                const fileLink = document.getElementById('adminFileLink');
+                
+                if (ticket.archivo_url) {
+                    fileContainer.style.display = 'block';
+                    fileLink.href = ticket.archivo_url;
+                } else {
+                    fileContainer.style.display = 'none';
+                }
+                // ==========================================
+
                 document.getElementById('modalTicketArea').textContent = ticket.area || 'No especificada';
                 document.getElementById('ticketPriority').value = ticket.prioridad || 'low';
                 if (statusSelect) statusSelect.value = ticket.estado || 'pending';
