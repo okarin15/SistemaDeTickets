@@ -934,7 +934,7 @@
                             <div class="value" id="totalTickets">0</div>
                         </div>
                         
-                        <div class="card" onclick="quickFilter('new')" style="cursor: pointer;">
+                        <div class="card" onclick="quickFilter('custom_pending')" style="cursor: pointer;">
                             <h3>Pendientes</h3>
                             <div class="value" id="pendientesTickets">0</div>
                         </div>
@@ -985,8 +985,9 @@
                         
                         <select class="filter-select" id="filterStatus">
                             <option value="">Todos los estados</option>
-                            <option value="new">Nuevo</option>
-                            <option value="in-progress">En Progreso</option>
+                            <option value="custom_pending">Pendientes y En Progreso</option>
+                            <option value="new">Nuevo (Solo)</option>
+                            <option value="in-progress">En Progreso (Solo)</option>
                             <option value="resolved">Resuelto</option>
                             <option value="closed">Cerrado</option>
                         </select>
@@ -1341,17 +1342,21 @@
             if (!masterTickets) return;
             const total = masterTickets.length;
             
-            // Usamos normalizeStatus para comparar de forma segura
-            const pendientes = masterTickets.filter(t => normalizeStatus(t.estado) === 'new').length;
+            // MODIFICADO: Pendientes suma 'new' Y 'in-progress'
+            const pendientes = masterTickets.filter(t => {
+                const s = normalizeStatus(t.estado);
+                return s === 'new' || s === 'in-progress';
+            }).length;
+
+            // En Progreso (Solo in-progress)
             const progreso = masterTickets.filter(t => normalizeStatus(t.estado) === 'in-progress').length;
             
-            // Para 'Resueltos', sumamos 'resolved' Y 'closed'
+            // Resueltos (Resolved + Closed)
             const resueltos = masterTickets.filter(t => {
                 const s = normalizeStatus(t.estado);
                 return s === 'resolved' || s === 'closed';
             }).length;
 
-            // Actualizamos los números
             if(document.getElementById('totalTickets')) document.getElementById('totalTickets').textContent = total;
             if(document.getElementById('pendientesTickets')) document.getElementById('pendientesTickets').textContent = pendientes;
             if(document.getElementById('progresoTickets')) document.getElementById('progresoTickets').textContent = progreso;
@@ -1367,23 +1372,27 @@
             if (!searchInput || !filterStatus) return;
 
             const searchTerm = searchInput.value.toLowerCase();
-            const statusFilter = filterStatus.value; // Este ya viene limpio del select ('new', 'in-progress', etc)
+            const statusFilter = filterStatus.value;
 
             const filteredTickets = masterTickets.filter(ticket => {
                 // 1. Filtro de Texto
                 const matchesSearch = ticket.titulo.toLowerCase().includes(searchTerm) || 
                                      `T-${ticket.id.toString().padStart(4, '0')}`.includes(searchTerm);
                 
-                // 2. Filtro de Estado (Usando normalización)
+                // 2. Filtro de Estado (Lógica Mejorada)
                 const tStatus = normalizeStatus(ticket.estado);
                 let matchesStatus = true;
 
                 if (statusFilter) {
-                    if (statusFilter === 'resolved') {
-                        // Si el filtro es Resuelto, aceptamos Resolved O Closed
+                    // AQUÍ ESTÁ LA LÓGICA CLAVE
+                    if (statusFilter === 'custom_pending') {
+                        // Muestra Nuevos Y En Progreso
+                        matchesStatus = (tStatus === 'new' || tStatus === 'in-progress');
+                    } else if (statusFilter === 'resolved') {
+                        // Muestra Resueltos Y Cerrados (Opcional, si quieres agruparlos)
                         matchesStatus = (tStatus === 'resolved' || tStatus === 'closed');
                     } else {
-                        // Coincidencia exacta para el resto
+                        // Coincidencia exacta para casos normales
                         matchesStatus = tStatus === statusFilter;
                     }
                 }
@@ -1394,7 +1403,6 @@
             currentTickets = filteredTickets;
             currentPage = 1;
             loadTickets();
-            // NO llamamos a updateDashboardStats aquí para que los contadores de arriba se mantengan con los totales globales
         }
 
         function refreshTickets() {

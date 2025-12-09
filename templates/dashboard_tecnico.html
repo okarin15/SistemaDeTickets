@@ -1286,7 +1286,7 @@
                               style="cursor: pointer; user-select: none;" 
                               title="Clic para cambiar prioridad">${getPriorityText(ticket.prioridad)}</span>
                     </td>
-                    <td><span class="status ${ticket.estado || ''}">${getStatusText(ticket.estado)}</span></td>
+                    <td><span class="status ${normalizeStatus(ticket.estado)}">${getStatusText(ticket.estado)}</span></td>
                     <td>${formatDate(ticket.fecha)}</td>
                     <td class="action-buttons">
                         <button class="action-btn view" type="button" onclick="viewTicket(${ticket.id})" title="Ver detalles y responder">
@@ -1322,71 +1322,62 @@
             renderMyTicketsTable(filtered);
         }
 
-        function renderMyTicketsTable(list) {
+    function renderMyTicketsTable(list) {
             const tbody = document.getElementById('myTicketsTableBody');
             tbody.innerHTML = '';
-
-            // PAGINAR
             const pageData = paginateData(list, currentPage.myTickets);
 
             pageData.forEach(ticket => {
-                // --- LÓGICA SLA MEJORADA (PARA EL PROFESOR) ---
+                // === LÓGICA SLA V2 (TÉCNICO) ===
                 let slaIcon = '';
                 let slaTexto = '';
-                
-                // Definimos el texto explicativo (El "Tooltip")
-                // NOTA: Aquí ticket.horas no existe aún, usamos una simulación o esperamos a que lo envíe el backend.
-                // Por ahora, el backend ya lo envía, así que podemos usarlo.
-                const horasTranscurridas = ticket.horas_transcurridas || 0; // Usamos el dato del backend si existe
-                const infoSLA = `Prioridad: ${getPriorityText(ticket.prioridad)}\nLímite: ${ticket.horas_limite}h\nTranscurrido: ${horasTranscurridas.toFixed(1)}h`;
+                const horasUsadas = parseFloat(ticket.horas) || 0;
+                const horasLimite = parseFloat(ticket.horas_limite) || 48;
+                const horasRestantes = horasLimite - horasUsadas;
+                const s = normalizeStatus(ticket.estado);
+                const estaCerrado = (s === 'completed' || s === 'closed' || s === 'resolved');
 
-                if (ticket.sla === 'overdue') {
-                    slaIcon = `<i class="fas fa-fire" style="color: #ef4444; cursor: help;" title="${infoSLA} (VENCIDO)"></i>`;
-                    slaTexto = `<small style="color: #ef4444; font-size: 0.7rem; display: block;">+${(horasTranscurridas - ticket.horas_limite).toFixed(1)}h</small>`;
-                } else if (ticket.sla === 'warning') {
-                    slaIcon = `<i class="fas fa-exclamation-triangle" style="color: #f59e0b; cursor: help;" title="${infoSLA} (POR VENCER)"></i>`;
-                    slaTexto = `<small style="color: #f59e0b; font-size: 0.7rem; display: block;">Quedan ${(ticket.horas_limite - horasTranscurridas).toFixed(1)}h</small>`;
+                if (estaCerrado) {
+                    if (horasRestantes >= 0) {
+                        slaIcon = `<i class="fas fa-check-double" style="color: #10b981;" title="Cumpliste SLA"></i>`;
+                        slaTexto = `<span style="color: #10b981; font-weight:600; font-size:0.8rem;">En Plazo</span>`;
+                    } else {
+                        slaIcon = `<i class="fas fa-times-circle" style="color: #64748b;" title="Incumpliste SLA"></i>`;
+                        slaTexto = `<span style="color: #64748b; font-size:0.8rem;">Fuera (+${Math.abs(horasRestantes).toFixed(1)}h)</span>`;
+                    }
                 } else {
-                    slaIcon = `<i class="fas fa-check-circle" style="color: #10b981; cursor: help;" title="${infoSLA} (EN PLAZO)"></i>`;
-                    slaTexto = `<small style="color: #10b981; font-size: 0.7rem; display: block;">${horasTranscurridas.toFixed(1)}h / ${ticket.horas_limite}h</small>`; 
+                    if (horasRestantes < 0) {
+                        slaIcon = `<i class="fas fa-fire" style="color: #ef4444;" title="VENCIDO"></i>`;
+                        slaTexto = `<span style="color: #ef4444; font-weight:bold; font-size:0.8rem;">+${Math.abs(horasRestantes).toFixed(1)}h</span>`;
+                    } else if (horasRestantes < 10) {
+                        slaIcon = `<i class="fas fa-exclamation-triangle" style="color: #f59e0b;" title="Por vencer"></i>`;
+                        slaTexto = `<span style="color: #f59e0b; font-weight:bold; font-size:0.8rem;">Quedan ${horasRestantes.toFixed(1)}h</span>`;
+                    } else {
+                        slaIcon = `<i class="fas fa-clock" style="color: #3b82f6;" title="En curso"></i>`;
+                        slaTexto = `<span style="color: #3b82f6; font-size:0.8rem;">Quedan ${horasRestantes.toFixed(1)}h</span>`;
+                    }
                 }
-                // ---------------------------------------------
+                // ===============================
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><strong>T-${String(ticket.id || '').padStart(6, '0')}</strong></td>
-                    <td>${ticket.titulo || ''}</td>
+                    <td><strong>T-${String(ticket.id).padStart(6, '0')}</strong></td>
+                    <td>${ticket.titulo}</td>
                     <td>${ticket.area || '-'}</td>
-                    <td>${ticket.usuario || ''}</td>
-                    <td>
-                        <span class="priority ${ticket.prioridad || ''}" 
-                              onclick="cycleTicketPriority(${ticket.id})" 
-                              style="cursor: pointer; user-select: none;" 
-                              title="Clic para cambiar prioridad">${getPriorityText(ticket.prioridad)}</span>
-                    </td>
+                    <td>${ticket.usuario}</td>
+                    <td><span class="priority ${normalizePriority(ticket.prioridad)}">${getPriorityText(ticket.prioridad)}</span></td>
                     <td style="display: flex; align-items: center; gap: 10px;">
-                        <span class="status ${normalizeStatus(ticket.estado)}">
-                            ${getStatusText(ticket.estado)}
-                        </span>
-                        <div style="text-align: center; line-height: 1;">
-                            ${slaIcon}
-                            ${slaTexto}
-                        </div>
+                        <span class="status ${normalizeStatus(ticket.estado)}">${getStatusText(ticket.estado)}</span>
+                        <div style="text-align: center; line-height: 1;">${slaIcon} ${slaTexto}</div>
                     </td>
                     <td>${formatDate(ticket.fecha)}</td>
                     <td class="action-buttons">
-                        <button class="action-btn view" type="button" onclick="viewTicket(${ticket.id})" title="Ver detalles y responder">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="action-btn state" type="button" onclick="cycleTicketStatus(${ticket.id})" title="Avanzar estado del ticket">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
+                        <button class="action-btn view" onclick="viewTicket(${ticket.id})"><i class="fas fa-eye"></i></button>
+                        <button class="action-btn state" onclick="cycleTicketStatus(${ticket.id})"><i class="fas fa-sync-alt"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
-            
-            // DIBUJAR CONTROLES
             renderPaginationControls(list.length, currentPage.myTickets, 'myTicketsPagination', 'myTickets');
         }
 
@@ -1416,29 +1407,45 @@
             const tbody = document.getElementById('allTicketsTableBody');
             tbody.innerHTML = '';
 
-            // PAGINAR
             const pageData = paginateData(list, currentPage.allTickets);
 
             pageData.forEach(ticket => {
-                // --- LÓGICA SLA MEJORADA (PARA EL PROFESOR) ---
+                // === LÓGICA SLA V2 (CORREGIDA PARA TODOS LOS TICKETS) ===
                 let slaIcon = '';
                 let slaTexto = '';
                 
-                // Reutilizamos la misma lógica que en la tabla del admin
-                const horasTranscurridas = ticket.horas_transcurridas || 0;
-                const infoSLA = `Prioridad: ${getPriorityText(ticket.prioridad)}\nLímite: ${ticket.horas_limite}h\nTranscurrido: ${horasTranscurridas.toFixed(1)}h`;
+                // 1. Obtener datos
+                const horasUsadas = parseFloat(ticket.horas) || 0;
+                const horasLimite = parseFloat(ticket.horas_limite) || 48; // 48h por defecto
+                const horasRestantes = horasLimite - horasUsadas;
+                
+                // 2. Verificar estado
+                const s = normalizeStatus(ticket.estado);
+                const estaCerrado = (s === 'completed' || s === 'closed' || s === 'resolved');
 
-                if (ticket.sla === 'overdue') {
-                    slaIcon = `<i class="fas fa-fire" style="color: #ef4444; cursor: help;" title="${infoSLA} (VENCIDO)"></i>`;
-                    slaTexto = `<small style="color: #ef4444; font-size: 0.7rem; display: block;">+${(horasTranscurridas - ticket.horas_limite).toFixed(1)}h</small>`;
-                } else if (ticket.sla === 'warning') {
-                    slaIcon = `<i class="fas fa-exclamation-triangle" style="color: #f59e0b; cursor: help;" title="${infoSLA} (POR VENCER)"></i>`;
-                    slaTexto = `<small style="color: #f59e0b; font-size: 0.7rem; display: block;">Quedan ${(ticket.horas_limite - horasTranscurridas).toFixed(1)}h</small>`;
+                if (estaCerrado) {
+                    // TICKET CERRADO: Veredicto Final
+                    if (horasRestantes >= 0) {
+                        slaIcon = `<i class="fas fa-check-double" style="color: #10b981;" title="En Plazo"></i>`;
+                        slaTexto = `<span style="color: #10b981; font-weight:600; font-size:0.8rem;">En Plazo</span>`;
+                    } else {
+                        slaIcon = `<i class="fas fa-times-circle" style="color: #64748b;" title="Fuera de Plazo"></i>`;
+                        slaTexto = `<span style="color: #64748b; font-size:0.8rem;">Fuera (+${Math.abs(horasRestantes).toFixed(1)}h)</span>`;
+                    }
                 } else {
-                    slaIcon = `<i class="fas fa-check-circle" style="color: #10b981; cursor: help;" title="${infoSLA} (EN PLAZO)"></i>`;
-                    slaTexto = `<small style="color: #10b981; font-size: 0.7rem; display: block;">${horasTranscurridas.toFixed(1)}h / ${ticket.horas_limite}h</small>`; 
+                    // TICKET ABIERTO: Cuenta Regresiva
+                    if (horasRestantes < 0) {
+                        slaIcon = `<i class="fas fa-fire" style="color: #ef4444;" title="VENCIDO"></i>`;
+                        slaTexto = `<span style="color: #ef4444; font-weight:bold; font-size:0.8rem;">+${Math.abs(horasRestantes).toFixed(1)}h</span>`;
+                    } else if (horasRestantes < 10) {
+                        slaIcon = `<i class="fas fa-exclamation-triangle" style="color: #f59e0b;" title="Por vencer"></i>`;
+                        slaTexto = `<span style="color: #f59e0b; font-weight:bold; font-size:0.8rem;">Quedan ${horasRestantes.toFixed(1)}h</span>`;
+                    } else {
+                        slaIcon = `<i class="fas fa-clock" style="color: #3b82f6;" title="En tiempo"></i>`;
+                        slaTexto = `<span style="color: #3b82f6; font-size:0.8rem;">Quedan ${horasRestantes.toFixed(1)}h</span>`;
+                    }
                 }
-                // ---------------------------------------------
+                // ========================================================
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -1446,19 +1453,19 @@
                     <td>${ticket.titulo || ''}</td>
                     <td>${ticket.area || '-'}</td>
                     <td>${ticket.usuario || ''}</td>
-                    <td>
-                        <span class="priority ${ticket.prioridad || ''}" 
+                    <td> 
+                        <span class="priority ${normalizePriority(ticket.prioridad)}" 
                               onclick="cycleTicketPriority(${ticket.id})" 
-                              style="cursor: pointer; user-select: none;" 
-                              title="Clic para cambiar prioridad">${getPriorityText(ticket.prioridad)}</span>
+                              style="cursor: pointer; user-select: none;">
+                            ${getPriorityText(ticket.prioridad)}
+                        </span>
                     </td>
                     <td style="display: flex; align-items: center; gap: 10px;">
                         <span class="status ${normalizeStatus(ticket.estado)}">
                             ${getStatusText(ticket.estado)}
                         </span>
                         <div style="text-align: center; line-height: 1;">
-                            ${slaIcon}
-                            ${slaTexto}
+                            ${slaIcon} ${slaTexto}
                         </div>
                     </td>
                     <td>${formatDate(ticket.fecha)}</td>
@@ -1475,7 +1482,6 @@
                 tbody.appendChild(tr);
             });
 
-            // DIBUJAR CONTROLES
             renderPaginationControls(list.length, currentPage.allTickets, 'allTicketsPagination', 'allTickets');
         }
 
