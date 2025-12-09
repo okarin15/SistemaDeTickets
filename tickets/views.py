@@ -175,6 +175,9 @@ def dashboard_admin(request):
             
             'agente': t.asignado_a.username if t.asignado_a else "",
             'descripcion': t.descripcion,
+            
+            # === AGREGA ESTA LÍNEA ===
+            'archivo_url': t.archivo.url if t.archivo else None,
         })
 
     # 3. CATEGORÍAS (NUEVO)
@@ -449,6 +452,10 @@ def guardar_usuario(request):
         email = request.POST.get('email')
         rol = request.POST.get('rol')
         password = request.POST.get('password')
+        
+        # --- NUEVO: Leer el estado del formulario ---
+        estado = request.POST.get('estado')
+        # -------------------------------------------
         nombre_completo = request.POST.get('nombre')
 
         if user_id:
@@ -462,6 +469,11 @@ def guardar_usuario(request):
                 partes = nombre_completo.split(' ', 1)
                 usuario.first_name = partes[0]
                 usuario.last_name = partes[1] if len(partes) > 1 else ''
+
+            # --- NUEVO: Actualizar is_active ---
+            # Si el select dice 'active', ponemos True. Si no, False.
+            usuario.is_active = (estado == 'active')
+            # -----------------------------------
             
             # Solo cambiamos la contraseña si escribieron algo
             if password:
@@ -482,8 +494,11 @@ def guardar_usuario(request):
                 messages.error(request, 'El nombre de usuario ya existe.')
                 return redirect('dashboard_admin')
 
+            # --- NUEVO: Crear con is_active correcto ---
+            es_activo = (estado == 'active')
+
             # Creamos el usuario (la contraseña se encripta aquí)
-            nuevo_usuario = User.objects.create_user(username=username, email=email, password=password)
+            nuevo_usuario = User.objects.create_user(username=username, email=email, password=password, is_active=es_activo)
             
             if nombre_completo:
                 partes = nombre_completo.split(' ', 1)
